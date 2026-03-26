@@ -85,11 +85,9 @@ namespace Proyecto.Controllers
             ViewBag.VentanillaName = asignacion.Ventanilla.Numero_Ventanilla;
             ViewBag.VentanillaId = asignacion.VentanillaId;
 
-            // Fetch current ticket
             var currentTicket = await _ticketService.ObtenerTicketActualPorVentanillaAsync(asignacion.VentanillaId);
             ViewBag.CurrentTicket = currentTicket;
 
-            // Fetch pending queue
             var serviciosAsignados = await _context.VentanillaServicios
                 .Where(vs => vs.VentanillaId == asignacion.VentanillaId && vs.Activo)
                 .Select(vs => vs.ServicioId).ToListAsync();
@@ -160,7 +158,6 @@ namespace Proyecto.Controllers
         [HttpPost]
         public async Task<IActionResult> LlamarDeNuevo(Guid ticketId)
         {
-            // Just broadcast to ring the bell again
             await _hubContext.Clients.All.SendAsync("ReceiveQueueUpdate");
             return RedirectToAction("Index");
         }

@@ -18,16 +18,11 @@ namespace Proyecto.Controllers
 			_context = context;
 		}
 
-		// ── LANDING / LOGIN ────────────────────────────────────────────
 
-		/// <summary>
-		/// Página principal: muestra la landing con los formularios de
-		/// login de Empleado y Cliente en el panel derecho.
-		/// </summary>
 		[HttpGet]
 		public IActionResult Login(string tab = "")
 		{
-			// Si ya está autenticado como empleado, redirigir al panel
+
 			if (User.Identity?.IsAuthenticated == true)
 			{
 				var rol = User.FindFirstValue(ClaimTypes.Role) ?? "";
@@ -36,7 +31,6 @@ namespace Proyecto.Controllers
 					: RedirectToAction("Index", "Agente");
 			}
 
-			// Si ya está autenticado como cliente, redirigir al kiosco
 			if (!string.IsNullOrWhiteSpace(HttpContext.Session.GetString("ClienteNombre")))
 				return RedirectToAction("Index", "Kiosco");
 
@@ -45,11 +39,7 @@ namespace Proyecto.Controllers
 			return View(new LoginEmpleadoVm());
 		}
 
-		// ── LOGIN EMPLEADO ─────────────────────────────────────────────
 
-		/// <summary>
-		/// Autentica a un empleado (Admin o Agente) mediante cookies.
-		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> LoginEmpleado(LoginEmpleadoVm model)

@@ -2,10 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Proyecto.Models
 {
-    /// <summary>
-    /// ViewModel para crear y editar una Sucursal.
-    /// SucursalId es null al crear, requerido al editar.
-    /// </summary>
+
     public class SucursalVm
     {
         public Guid? SucursalId { get; set; }

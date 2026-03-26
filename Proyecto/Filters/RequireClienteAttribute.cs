@@ -3,11 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Proyecto.Filters
 {
-	/// <summary>
-	/// Protege rutas que solo pueden acceder clientes autenticados por sesión.
-	/// Verifica que "ClienteNombre" exista en sesión.
-	/// Uso: [RequireCliente]
-	/// </summary>
+
 	public class RequireClienteAttribute : TypeFilterAttribute
 	{
 		public RequireClienteAttribute() : base(typeof(RequireClienteFilter)) { }

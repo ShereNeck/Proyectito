@@ -2,11 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Proyecto.Models
 {
-    /// <summary>
-    /// ViewModel para crear / editar un Empleado y mostrarlo en la lista.
-    /// Los campos de usuario (NombreUsuario, Contrasena, RolId) solo se usan en la creación.
-    /// Los campos *Display son de solo lectura para la lista.
-    /// </summary>
     public class EmpleadoVm
     {
         public Guid? EmpleadoId { get; set; }
