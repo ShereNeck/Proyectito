@@ -1,0 +1,332 @@
+@using Proyecto.Data.Entidades
+@model IEnumerable<Ventanilla>
+@{
+    ViewData["Title"] = "Administración";
+    var sucursales = ViewBag.Sucursales as List<Sucursal> ?? new();
+    var servicios = ViewBag.Servicios as List<Servicio> ?? new();
+    var empleados = ViewBag.Empleados as List<Empleado> ?? new();
+}
+
+<div class="admin-body">
+    <div class="sidebar">
+        <a href="/Admin/Ventanillas" class="sidebar-item active"><span class="icon">🪟</span> Ventanillas</a>
+        <a href="/Admin/Servicios" class="sidebar-item"><span class="icon">🏷️</span> Servicios</a>
+        <a href="/Admin/Sucursales" class="sidebar-item"><span class="icon">📍</span> Sucursales</a>
+        <a href="/Admin/Empleados" class="sidebar-item"><span class="icon">👤</span> Empleados</a>
+        <a href="/Admin/Roles" class="sidebar-item"><span class="icon">🔐</span> Roles</a>
+        <a href="/Admin/Reportes" class="sidebar-item"><span class="icon">📈</span> Reportes</a>
+    </div>
+
+    <div class="admin-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert-success">✅ @TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert-error">⚠️ @TempData["Error"]</div>
+        }
+
+        <div class="admin-top">
+            <h3>Gestión de Ventanillas</h3>
+            <button class="btn-add" onclick="openModal('modalCreate')">+ Nueva Ventanilla</button>
+        </div>
+
+        <!-- Barra de filtros -->
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="filtroTexto" placeholder="🔍 Buscar por número o sucursal..."
+                   oninput="debouncedBuscar()"
+                   style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;" />
+            <select id="filtroEstado" onchange="buscar()"
+                    style="padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;background:white;">
+                <option value="">Todos los estados</option>
+                <option value="Abierta">Abierta</option>
+                <option value="Cerrada">Cerrada</option>
+            </select>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>N° Ventanilla</th>
+                    <th>Sucursal</th>
+                    <th>Servicios</th>
+                    <th>Empleado Asignado</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+
+        <!-- Paginación -->
+        <div id="paginacion" style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:14px;flex-wrap:wrap;"></div>
+    </div>
+</div>
+
+<!-- MODAL CREAR -->
+<div id="modalCreate" class="modal-overlay d-none">
+    <div class="modal-box">
+        <h4>+ Nueva Ventanilla</h4>
+        <form method="post" asp-action="Crear" asp-controller="Ventanillas">
+            <div class="modal-form-group">
+                <label>N° Ventanilla</label>
+                <input type="text" name="Numero" placeholder="Ej: V-03" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Estado</label>
+                <select name="Estado">
+                    <option value="Abierta">Abierta</option>
+                    <option value="Cerrada">Cerrada</option>
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label>Sucursal</label>
+                <select name="SucursalId" required>
+                    <option value="">-- Seleccionar --</option>
+                    @foreach (var s in sucursales)
+                    {
+                        <option value="@s.SucursalId">@s.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label>Empleado asignado <span style="font-size:11px;color:#9CA3AF;">(opcional)</span></label>
+                <select name="EmpleadoId">
+                    <option value="">— Sin asignar —</option>
+                    @foreach (var e in empleados)
+                    {
+                        <option value="@e.EmpleadoId">@e.Nombre @e.Apellido @(!string.IsNullOrEmpty(e.Cargo) ? $"({e.Cargo})" : "")</option>
+                    }
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label>Servicios que atiende</label>
+                <div class="check-group">
+                    @foreach (var s in servicios)
+                    {
+                        <label class="check-item">
+                            <input type="checkbox" name="ServicioIds" value="@s.ServicioId" />
+                            @s.Nombre_Servicio <small style="color:#6B7A99">(@s.Prefijo_Ticket)</small>
+                        </label>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalCreate')">Cancelar</button>
+                <button type="submit" class="btn-save">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div id="modalEdit" class="modal-overlay d-none">
+    <div class="modal-box">
+        <h4>✏️ Editar Ventanilla</h4>
+        <form method="post" asp-action="Editar" asp-controller="Ventanillas">
+            <input type="hidden" id="editId" name="VentanillaId" />
+            <div class="modal-form-group">
+                <label>N° Ventanilla</label>
+                <input type="text" id="editNumero" name="Numero" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Estado</label>
+                <select id="editEstado" name="Estado">
+                    <option value="Abierta">Abierta</option>
+                    <option value="Cerrada">Cerrada</option>
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label>Sucursal</label>
+                <select id="editSucursal" name="SucursalId" required>
+                    @foreach (var s in sucursales)
+                    {
+                        <option value="@s.SucursalId">@s.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label>Empleado asignado <span style="font-size:11px;color:#9CA3AF;">(opcional)</span></label>
+                <select id="editEmpleado" name="EmpleadoId">
+                    <option value="">— Sin asignar —</option>
+                    @foreach (var e in empleados)
+                    {
+                        <option value="@e.EmpleadoId">@e.Nombre @e.Apellido @(!string.IsNullOrEmpty(e.Cargo) ? $"({e.Cargo})" : "")</option>
+                    }
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label>Servicios que atiende</label>
+                <div class="check-group" id="editServicios">
+                    @foreach (var s in servicios)
+                    {
+                        <label class="check-item">
+                            <input type="checkbox" class="srv-check" name="ServicioIds" value="@s.ServicioId" />
+                            @s.Nombre_Servicio <small style="color:#6B7A99">(@s.Prefijo_Ticket)</small>
+                        </label>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalEdit')">Cancelar</button>
+                <button type="submit" class="btn-save">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL ELIMINAR -->
+<div id="modalDelete" class="modal-overlay d-none">
+    <div class="modal-box" style="max-width:380px;text-align:center;">
+        <h4>🗑️ Eliminar Ventanilla</h4>
+        <p style="color:#6B7A99;font-size:13px;margin-bottom:16px;">¿Seguro que deseas eliminar <b id="deleteNombre"></b>?</p>
+        <form method="post" asp-action="Eliminar" asp-controller="Ventanillas">
+            <input type="hidden" id="deleteId" name="VentanillaId" />
+            <div class="modal-footer" style="justify-content:center;">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalDelete')">Cancelar</button>
+                <button type="submit" class="btn-del-confirm">Sí, eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var PAGE_SIZE     = 10;
+        var paginaActual  = 1;
+        var todosLosDatos = [];
+        var _cache        = {};
+        var _debTimer     = null;
+
+        function h(s) {
+            return (s == null ? '' : String(s))
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        // ── Llamada AJAX ─────────────────────────────────────────────────
+        function buscar() {
+            var vm = {
+                Busqueda: document.getElementById('filtroTexto').value,
+                Estado:   document.getElementById('filtroEstado').value
+            };
+            fetch('/Admin/Ventanillas/Buscar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vm)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                todosLosDatos = data;
+                paginaActual  = 1;
+                renderTabla();
+            });
+        }
+
+        function debouncedBuscar() {
+            clearTimeout(_debTimer);
+            _debTimer = setTimeout(buscar, 300);
+        }
+
+        // ── Construir fila HTML ──────────────────────────────────────────
+        function buildRow(item, num) {
+            _cache[item.ventanillaId] = item;
+            var badge = item.estado === 'Abierta'
+                ? '<span class="pill-active2">Abierta</span>'
+                : '<span class="pill-inactive">' + h(item.estado) + '</span>';
+            return '<tr>' +
+                '<td>' + num + '</td>' +
+                '<td><b>' + h(item.numero) + '</b></td>' +
+                '<td>' + h(item.sucursal) + '</td>' +
+                '<td style="color:#6B7A99;">' + h(item.servicios || '—') + '</td>' +
+                '<td>' + h(item.empleado || '—') + '</td>' +
+                '<td>' + badge + '</td>' +
+                '<td><div class="tbl-actions">' +
+                    '<button class="tbl-btn tbl-edit" onclick="openEditById(\'' + item.ventanillaId + '\')">Editar</button>' +
+                    '<button class="tbl-btn tbl-del"  onclick="openDeleteById(\'' + item.ventanillaId + '\')">Eliminar</button>' +
+                '</div></td>' +
+                '</tr>';
+        }
+
+        // ── Renderizar con paginación ────────────────────────────────────
+        function renderTabla() {
+            var tbody  = document.getElementById('tbody');
+            _cache = {};
+            var inicio = (paginaActual - 1) * PAGE_SIZE;
+            var pagina = todosLosDatos.slice(inicio, inicio + PAGE_SIZE);
+            if (todosLosDatos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6B7A99;padding:20px;">No se encontraron resultados.</td></tr>';
+            } else {
+                tbody.innerHTML = pagina.map(function(item, idx) { return buildRow(item, inicio + idx + 1); }).join('');
+            }
+            renderPaginacion();
+        }
+
+        function renderPaginacion() {
+            var total    = todosLosDatos.length;
+            var totalPag = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            var pag  = document.getElementById('paginacion');
+            var html = '<span style="font-size:12px;color:#6B7A99;margin-right:6px;">' + total + ' resultado(s)</span>';
+            if (totalPag > 1) {
+                var s = 'padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid ';
+                html += '<button onclick="irPagina(' + (paginaActual-1) + ')" ' + (paginaActual===1?'disabled':'') + ' style="' + s + '#E5E7EB;background:white;">‹</button>';
+                for (var p = 1; p <= totalPag; p++) {
+                    html += '<button onclick="irPagina(' + p + ')" style="' + s +
+                        (p===paginaActual ? '#1A56DB;background:#1A56DB;color:white;font-weight:600' : '#E5E7EB;background:white;color:#374151') + ';">' + p + '</button>';
+                }
+                html += '<button onclick="irPagina(' + (paginaActual+1) + ')" ' + (paginaActual===totalPag?'disabled':'') + ' style="' + s + '#E5E7EB;background:white;">›</button>';
+            }
+            pag.innerHTML = html;
+        }
+
+        function irPagina(p) {
+            var totalPag = Math.ceil(todosLosDatos.length / PAGE_SIZE);
+            if (p < 1 || p > totalPag) return;
+            paginaActual = p; renderTabla();
+        }
+
+        // ── Abrir modales desde cache ────────────────────────────────────
+        function openEditById(id) {
+            var d = _cache[id];
+            openEdit(d.ventanillaId, d.numero, d.estado, d.sucursalId, d.servicioIds, d.empleadoId);
+        }
+        function openDeleteById(id) {
+            var d = _cache[id];
+            openDelete(d.ventanillaId, d.numero);
+        }
+
+        // ── Modales ──────────────────────────────────────────────────────
+        function openModal(id)  { document.getElementById(id).classList.remove('d-none'); }
+        function closeModal(id) { document.getElementById(id).classList.add('d-none'); }
+
+        function openEdit(id, numero, estado, sucursalId, srvIds, empId) {
+            document.getElementById('editId').value       = id;
+            document.getElementById('editNumero').value   = numero;
+            document.getElementById('editEstado').value   = estado;
+            document.getElementById('editSucursal').value = sucursalId;
+            document.getElementById('editEmpleado').value = empId || '';
+
+            // Marcar checkboxes de servicios
+            var ids = srvIds ? srvIds.split(',') : [];
+            document.querySelectorAll('.srv-check').forEach(function(cb) {
+                cb.checked = ids.includes(cb.value);
+            });
+
+            openModal('modalEdit');
+        }
+
+        function openDelete(id, nombre) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteNombre').textContent = nombre;
+            openModal('modalDelete');
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(function(m) {
+            m.addEventListener('click', function(e) { if (e.target === m) m.classList.add('d-none'); });
+        });
+
+        document.addEventListener('DOMContentLoaded', buscar);
+    </script>
+}
