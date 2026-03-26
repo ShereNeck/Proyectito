@@ -1,0 +1,98 @@
+@using Proyecto.Data.Entidades
+@model IEnumerable<Ticket>
+@{
+    ViewData["Title"] = "Panel del Agente";
+    var currentTicket = ViewBag.CurrentTicket as Ticket;
+    var ventanillaId = ViewBag.VentanillaId;
+}
+
+<div class="agente-body">
+    @if(TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" style="margin: 20px 24px 0 24px;">@TempData["Error"]</div>
+    }
+    
+    @if(ViewBag.Error != null)
+    {
+        <div class="alert alert-warning" style="margin: 20px 24px;">@ViewBag.Error</div>
+    }
+    else
+    {
+        <div class="agente-content">
+            <div class="agente-card">
+                <div class="agente-card-header">
+                    Turno Actual
+                    @if(currentTicket != null){ <span class="badge">EN ATENCIÓN</span> } else { <span class="badge" style="background:#ddd;">LIBRE</span> }
+                </div>
+                <div class="agente-card-body">
+                    <div class="current-ticket">
+                        @if(currentTicket != null)
+                        {
+                            <div class="big-num">@currentTicket.Numero_Ticket</div>
+                            var waitTime = Math.Round((currentTicket.Hora_Atencion.Value - currentTicket.Hora_Emision).TotalMinutes);
+                            <div class="ticket-info">Emitido: @currentTicket.Hora_Emision.ToLocalTime().ToString("HH:mm") — Espera: @waitTime min</div>
+                            <div class="ticket-service">@currentTicket.Servicio?.Nombre_Servicio</div>
+                        }
+                        else
+                        {
+                             <div class="big-num" style="color:#ddd;">---</div>
+                             <div class="ticket-info">No hay turno en atención.</div>
+                        }
+                    </div>
+                    
+                    <div class="action-btns">
+                        @if(currentTicket != null)
+                        {
+                            <form asp-action="LlamarDeNuevo" method="post" class="d-inline w-100"><input type="hidden" name="ticketId" value="@currentTicket.TicketId" /><button type="submit" class="btn btn-primary w-100 h-100">📢 Llamar de nuevo</button></form>
+                            <form asp-action="FinalizarTicket" method="post" class="d-inline w-100"><input type="hidden" name="ticketId" value="@currentTicket.TicketId" /><button type="submit" class="btn btn-success w-100 h-100">✅ Finalizar</button></form>
+                            <form asp-action="MarcarAusente" method="post" class="d-inline w-100"><input type="hidden" name="ticketId" value="@currentTicket.TicketId" /><button type="submit" class="btn btn-danger w-100 h-100">❌ Ausente</button></form>
+                            <button type="button" class="btn btn-outline w-100 h-100" disabled>⏭ Siguiente</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-primary w-100 h-100" disabled>📢 Llamar de nuevo</button>
+                            <button type="button" class="btn btn-success w-100 h-100" disabled>✅ Finalizar</button>
+                            <button type="button" class="btn btn-danger w-100 h-100" disabled>❌ Ausente</button>
+                            @if(Model != null && Model.Any())
+                            {
+                                 <form asp-action="LlamarSiguiente" method="post" class="d-inline w-100"><input type="hidden" name="ventanillaId" value="@ventanillaId" /><button type="submit" class="btn btn-outline w-100 h-100" style="border-color:var(--blue); color:var(--blue); font-weight:700;">⏭ Siguiente</button></form>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-outline w-100 h-100" disabled>⏭ Siguiente</button>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            <div class="agente-card">
+                <div class="agente-card-header">
+                    Cola de Espera (Compatible)
+                    <span class="badge" style="background:var(--navy);border:1px solid rgba(255,255,255,0.2);color:white;">@Model?.Count() pendientes</span>
+                </div>
+                <div class="agente-card-body">
+                    <div class="queue-list">
+                        @if(Model != null && Model.Any())
+                        {
+                            foreach(var ticket in Model)
+                            {
+                                var waitTicks = (DateTime.UtcNow - ticket.Hora_Emision).TotalMinutes;
+                                <div class="queue-row">
+                                    <span class="qn">@ticket.Numero_Ticket</span>
+                                    <span class="qs">@ticket.Servicio?.Nombre_Servicio</span>
+                                    <span class="qt">@Math.Round(waitTicks) min</span>
+                                    <span class="status-pill @(ticket.Cola.Prioridad.Nombre == "Prioridad" ? "pill-active" : "pill-wait")">@(ticket.Cola.Prioridad.Nombre == "Prioridad" ? "Prioridad" : "Espera")</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="queue-row justify-content-center text-muted">No hay tickets compatibles en espera.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
