@@ -15,5 +15,24 @@ namespace Proyecto.Data.Entidades
             Usuarios = new HashSet<Usuario>();
             ModulosRoles = new HashSet<ModulosRoles>();
         }
+
+        public static Rol Crear(string nombre, string descripcion, Guid userId) => new()
+        {
+            RolId       = Guid.NewGuid(),
+            Nombre      = nombre,
+            Descripcion = descripcion,
+            Estado      = "Activo",
+            CreateBy    = userId,
+            ModifiedBy  = userId
+        };
+
+        public void Actualizar(string nombre, string descripcion, Guid userId)
+        {
+            Nombre      = nombre;
+            Descripcion = descripcion;
+            ModifiedBy  = userId;
+        }
+
+        public void EliminarLogico(Guid userId) { Eliminado = true; ModifiedBy = userId; }
     }
 }

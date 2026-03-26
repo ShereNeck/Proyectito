@@ -1,0 +1,183 @@
+@using Proyecto.Data.Entidades
+@model IEnumerable<Ticket>
+@{
+    ViewData["Title"] = "Reportes";
+    var total      = (int)ViewBag.Total;
+    var atendidos  = (int)ViewBag.Atendidos;
+    var ausentes   = (int)ViewBag.Ausentes;
+    var tiempo     = (double)ViewBag.TiempoPromedio;
+    var efectividad = (double)ViewBag.Efectividad;
+}
+
+<div class="admin-body">
+    <div class="sidebar">
+        <a href="/Admin/Index"      class="sidebar-item @(ViewBag.ActiveTab == "Ventanillas" ? "active" : "")"><span class="icon">🪟</span> Ventanillas</a>
+        <a href="/Admin/Servicios"  class="sidebar-item @(ViewBag.ActiveTab == "Servicios"   ? "active" : "")"><span class="icon">🏷️</span> Servicios</a>
+        <a href="/Admin/Sucursales" class="sidebar-item @(ViewBag.ActiveTab == "Sucursales"  ? "active" : "")"><span class="icon">📍</span> Sucursales</a>
+        <a href="/Admin/Empleados"  class="sidebar-item @(ViewBag.ActiveTab == "Empleados"   ? "active" : "")"><span class="icon">👤</span> Empleados</a>
+        <a href="/Admin/Roles"      class="sidebar-item @(ViewBag.ActiveTab == "Roles"       ? "active" : "")"><span class="icon">🔐</span> Roles</a>
+        <a href="/Admin/Reportes"   class="sidebar-item @(ViewBag.ActiveTab == "Reportes"    ? "active" : "")"><span class="icon">📈</span> Reportes</a>
+    </div>
+
+    <div class="admin-content" style="overflow-y:auto;padding:0;">
+        <div class="report-body">
+
+            <!-- HEADER -->
+            <div class="report-top">
+                <div>
+                    <h3>Reporte de Atención Diaria</h3>
+                    <p style="font-size:12px;color:var(--gray);margin-top:3px;">
+                        Fecha: <b>@ViewBag.TargetDate</b>
+                    </p>
+                </div>
+                <form method="get" class="date-filter">
+                    <input type="date" name="fecha" value="@ViewBag.TargetDate" />
+                    <button type="submit" class="btn-filter">📅 Filtrar</button>
+                </form>
+            </div>
+
+            <!-- KPI CARDS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Tickets</div>
+                    <div class="stat-value">@total</div>
+                    <div class="stat-sub" style="color:var(--gray);">emitidos hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Tiempo Promedio</div>
+                    <div class="stat-value" style="color:var(--gold);">@tiempo<span style="font-size:16px;font-weight:500;"> min</span></div>
+                    <div class="stat-sub" style="color:var(--gray);">de espera</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Atendidos</div>
+                    <div class="stat-value" style="color:var(--green);">@atendidos</div>
+                    <div class="stat-sub">@efectividad% efectividad</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Ausentes</div>
+                    <div class="stat-value" style="color:var(--red);">@ausentes</div>
+                    <div class="stat-sub" style="color:var(--gray);">no se presentaron</div>
+                </div>
+            </div>
+
+            <!-- BARRA DE EFECTIVIDAD GLOBAL -->
+            @if (total > 0)
+            {
+                var pct = (int)efectividad;
+                var colorClass = pct >= 90 ? "" : (pct >= 70 ? "low" : "bad");
+                <div class="chart-card" style="margin-bottom:16px;">
+                    <h4>📊 Efectividad Global del Día</h4>
+                    <div style="display:flex;align-items:center;gap:16px;">
+                        <div style="flex:1;">
+                            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray);margin-bottom:6px;">
+                                <span>0%</span><span>50%</span><span>100%</span>
+                            </div>
+                            <div class="eff-bar" style="height:14px;border-radius:8px;">
+                                <div class="eff-bar-fill @colorClass" style="width:@(pct)%;height:100%;border-radius:8px;"></div>
+                            </div>
+                        </div>
+                        <div style="font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:@(pct >= 90 ? "var(--green)" : pct >= 70 ? "var(--orange)" : "var(--red)");">
+                            @pct%
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- TABLA POR SERVICIO -->
+            <div class="report-grid">
+                <div class="chart-card">
+                    <h4>🏷️ Rendimiento por Servicio</h4>
+                    <table class="table-report">
+                        <thead>
+                            <tr>
+                                <th>Servicio</th>
+                                <th>Tickets</th>
+                                <th>T. Promedio</th>
+                                <th>Efectividad</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.ServiceStats.Count > 0)
+                            {
+                                foreach (var stat in ViewBag.ServiceStats)
+                                {
+                                    int eff = (int)Math.Round(stat.Eff);
+                                    string cls = eff >= 90 ? "" : (eff >= 70 ? "low" : "bad");
+                                    string color = eff >= 90 ? "var(--green)" : (eff >= 70 ? "var(--orange)" : "var(--red)");
+                                    <tr>
+                                        <td><b>@stat.Name</b></td>
+                                        <td>
+                                            <span style="background:#EEF2FF;color:var(--blue);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+                                                @stat.Count
+                                            </span>
+                                        </td>
+                                        <td style="color:var(--gray);">@(Math.Round(stat.AvgWait, 1)) min</td>
+                                        <td style="color:@color;font-weight:700;">@eff%</td>
+                                        <td style="width:140px;">
+                                            <div class="eff-bar">
+                                                <div class="eff-bar-fill @cls" style="width:@(eff)%"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" style="text-align:center;color:var(--gray);padding:32px;">
+                                        📭 No hay datos de atención para esta fecha.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DETALLE DE TICKETS -->
+            @if (Model.Any())
+            {
+                <div class="chart-card" style="margin-top:16px;">
+                    <h4>🎫 Detalle de Tickets</h4>
+                    <table class="table-report">
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Servicio</th>
+                                <th>Emitido</th>
+                                <th>Atendido</th>
+                                <th>Espera</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in Model.OrderByDescending(x => x.Hora_Emision))
+                            {
+                                int? espera = t.Hora_Atencion.HasValue
+                                    ? (int)(t.Hora_Atencion.Value - t.Hora_Emision).TotalMinutes
+                                    : (int?)null;
+                                var estadoColor = t.Estado_Ticket == "Finalizado" ? "var(--green)"
+                                               : t.Estado_Ticket == "Ausente"     ? "var(--red)"
+                                               : "var(--orange)";
+                                <tr>
+                                    <td><b style="font-family:'DM Mono',monospace;">@t.Numero_Ticket</b></td>
+                                    <td style="color:var(--gray);">@t.Servicio?.Nombre_Servicio</td>
+                                    <td style="color:var(--gray);">@t.Hora_Emision.ToLocalTime().ToString("HH:mm")</td>
+                                    <td style="color:var(--gray);">@(t.Hora_Atencion.HasValue ? t.Hora_Atencion.Value.ToLocalTime().ToString("HH:mm") : "—")</td>
+                                    <td>@(espera.HasValue ? espera + " min" : "—")</td>
+                                    <td>
+                                        <span style="background:@estadoColor;color:white;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;opacity:0.9;">
+                                            @t.Estado_Ticket
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>

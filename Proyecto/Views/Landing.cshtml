@@ -1,0 +1,738 @@
+@{
+    ViewData["Title"] = "Banco Argentum — Atención al Cliente";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy:       #0f1e3d;
+            --navy-mid:   #1a2f5a;
+            --navy-light: #2a4070;
+            --blue:       #185FA5;
+            --blue-light: #E6F1FB;
+            --blue-mid:   #85B7EB;
+            --gold:       #ffd166;
+            --text:       #1a2a4a;
+            --muted:      #6B7A99;
+            --border:     #d0d9e8;
+            --surface:    #f4f7fb;
+            --white:      #ffffff;
+            --radius-sm:  8px;
+            --radius-md:  12px;
+            --radius-lg:  16px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--white);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ── NAV ── */
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+            border-bottom: 1px solid var(--border);
+            background: var(--white);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-logo-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--navy);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-logo-icon svg { width: 20px; height: 20px; }
+
+        .nav-logo-text { line-height: 1.2; }
+        .nav-logo-name { font-size: 15px; font-weight: 600; color: var(--navy); }
+        .nav-logo-sub  { font-size: 11px; color: var(--muted); }
+
+        .nav-links { display: flex; gap: 24px; }
+        .nav-links a {
+            font-size: 13px;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color .15s;
+        }
+        .nav-links a:hover { color: var(--navy); }
+
+        .nav-actions { display: flex; gap: 8px; align-items: center; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: opacity .15s, transform .1s;
+            text-decoration: none;
+            border: none;
+        }
+        .btn:active { transform: scale(0.98); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { background: var(--surface); }
+
+        .btn-primary {
+            background: var(--navy);
+            color: var(--white);
+        }
+        .btn-primary:hover { opacity: .88; }
+
+        .btn-lg {
+            font-size: 15px;
+            padding: 12px 28px;
+            border-radius: var(--radius-md);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            background: var(--navy);
+            padding: 5rem 2rem 4rem;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 5px 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.08);
+            color: var(--blue-mid);
+            border: 1px solid rgba(133,183,235,.3);
+            margin-bottom: 1.75rem;
+            letter-spacing: .02em;
+        }
+
+        .hero-badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--gold);
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1.2;
+            max-width: 640px;
+            margin: 0 auto 1.25rem;
+        }
+
+        .hero h1 span { color: var(--gold); }
+
+        .hero p {
+            font-size: 16px;
+            color: rgba(255,255,255,.6);
+            max-width: 520px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.75;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero-primary {
+            background: var(--blue);
+            color: var(--white);
+            font-size: 15px;
+            padding: 12px 28px;
+            border-radius: var(--radius-md);
+            border: none;
+        }
+        .btn-hero-primary:hover { opacity: .88; }
+
+        .btn-hero-ghost {
+            background: rgba(255,255,255,.07);
+            color: rgba(255,255,255,.85);
+            font-size: 15px;
+            padding: 12px 28px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,.15);
+        }
+        .btn-hero-ghost:hover { background: rgba(255,255,255,.12); }
+
+        /* ── STATS ── */
+        .stats-bar {
+            background: var(--navy-mid);
+            border-bottom: 1px solid var(--navy-light);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .stat-item {
+            padding: 1.5rem 2rem;
+            border-right: 1px solid var(--navy-light);
+            text-align: center;
+        }
+        .stat-item:last-child { border-right: none; }
+
+        .stat-val {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 3px;
+        }
+
+        .stat-lbl { font-size: 12px; color: rgba(255,255,255,.5); }
+
+        .stat-hint {
+            font-size: 11px;
+            color: var(--gold);
+            margin-top: 3px;
+        }
+
+        /* ── SECTIONS ── */
+        .section { padding: 4rem 2rem; }
+        .section-inner { max-width: 900px; margin: 0 auto; }
+
+        .section-eyebrow {
+            font-size: 11px;
+            letter-spacing: .12em;
+            color: var(--blue);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .section-h {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .section-sub {
+            font-size: 15px;
+            color: var(--muted);
+            max-width: 540px;
+            line-height: 1.75;
+            margin-bottom: 2.5rem;
+        }
+
+        /* ── BEFORE / AFTER ── */
+        .before-after-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .ba-card {
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .ba-before { background: #fff5f7; border-color: #f3c0cc; }
+        .ba-after  { background: #f3faf0; border-color: #b5dba8; }
+
+        .ba-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .ba-before .ba-label { color: #993556; }
+        .ba-after  .ba-label { color: #3B6D11; }
+
+        .ba-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .ba-list li {
+            font-size: 13px;
+            line-height: 1.55;
+            padding-left: 16px;
+            position: relative;
+            color: var(--text);
+        }
+
+        .ba-before .ba-list li::before {
+            content: '–';
+            position: absolute;
+            left: 0;
+            color: #993556;
+            font-weight: 700;
+        }
+
+        .ba-after .ba-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #3B6D11;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        .ba-arrow {
+            font-size: 22px;
+            color: var(--blue-mid);
+            font-weight: 300;
+            text-align: center;
+        }
+
+        @@media (max-width: 600px) {
+            .before-after-grid {
+                grid-template-columns: 1fr;
+            }
+            .ba-arrow { transform: rotate(90deg); text-align: center; }
+        }
+
+
+        /* ── PROBLEM GRID ── */
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .prob-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+        }
+
+        .prob-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .prob-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .prob-desc {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        /* ── FEATURES ── */
+        .feat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .feat-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.4rem;
+            transition: border-color .2s;
+        }
+        .feat-card:hover { border-color: var(--blue-mid); }
+
+        .feat-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .feat-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .feat-desc {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        /* ── HOW IT WORKS ── */
+        .steps { display: flex; flex-direction: column; gap: 0; max-width: 560px; }
+
+        .step {
+            display: flex;
+            gap: 20px;
+            padding-bottom: 2rem;
+            position: relative;
+        }
+
+        .step:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 19px;
+            top: 40px;
+            bottom: 0;
+            width: 1px;
+            background: var(--border);
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--navy);
+            color: var(--white);
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-body { padding-top: 8px; }
+
+        .step-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 5px;
+        }
+
+        .step-desc {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        /* ── DIVIDER ── */
+        .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+        /* ── CTA ── */
+        .cta-section {
+            background: var(--navy);
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .cta-section p {
+            font-size: 15px;
+            color: rgba(255,255,255,.6);
+            margin-bottom: 2rem;
+            max-width: 460px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            background: var(--navy-mid);
+            border-top: 1px solid var(--navy-light);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-brand-name { font-size: 13px; font-weight: 600; color: var(--white); }
+        .footer-brand-sub  { font-size: 11px; color: rgba(255,255,255,.4); }
+
+        .footer-links { display: flex; gap: 20px; }
+        .footer-links a {
+            font-size: 12px;
+            color: rgba(255,255,255,.4);
+            text-decoration: none;
+            transition: color .15s;
+        }
+        .footer-links a:hover { color: rgba(255,255,255,.75); }
+
+        .footer-copy { font-size: 12px; color: rgba(255,255,255,.3); }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav class="nav">
+        <a href="/" class="nav-logo">
+            <div class="nav-logo-icon">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+                    <rect x="11" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.55"/>
+                    <rect x="2" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.55"/>
+                    <rect x="11" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.3"/>
+                </svg>
+            </div>
+            <div class="nav-logo-text">
+                <div class="nav-logo-name">Banco Argentum</div>
+                <div class="nav-logo-sub">Atención al cliente</div>
+            </div>
+        </a>
+
+        <div class="nav-links">
+            <a href="#problema">Lo que cambia</a>
+            <a href="#funciones">Beneficios</a>
+            <a href="#como-funciona">Cómo funciona</a>
+        </div>
+
+        <div class="nav-actions">
+            <a href="/Kiosco" class="btn btn-primary">Tomar turno</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-badge">
+            <div class="hero-badge-dot"></div>
+            Sistema de turnos — Banco Argentum
+        </div>
+        <h1>Tu tiempo es valioso.<br><span>Espera menos</span>, haz más.</h1>
+        <p>Banco Argentum moderniza la atención al cliente. Solicita tu turno desde el kiosco, sigue tu posición en la pantalla de sala y sé atendido sin filas ni confusión.</p>
+        <div class="hero-btns">
+            <a href="/Kiosco" class="btn btn-hero-primary">Solicitar turno ahora</a>
+        </div>
+    </section>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-val">8 min</div>
+            <div class="stat-lbl">Tiempo promedio de espera</div>
+            <div class="stat-hint">↓ 34% desde la implementación</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-val">1,200+</div>
+            <div class="stat-lbl">Clientes atendidos por día</div>
+            <div class="stat-hint">En todas las sucursales</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-val">5</div>
+            <div class="stat-lbl">Sucursales activas</div>
+            <div class="stat-hint">Con control centralizado</div>
+        </div>
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="section" id="problema" style="background: #f8fafc;">
+        <div class="section-inner">
+            <div class="section-eyebrow">Lo que cambia para vos</div>
+            <div class="section-h">Atrás quedaron las filas sin fin</div>
+            <div class="section-sub">Sabemos que tu tiempo vale. Por eso diseñamos una experiencia de atención que es clara, ordenada y sin sorpresas.</div>
+            <div class="before-after-grid">
+                <div class="ba-card ba-before">
+                    <div class="ba-label">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="6" stroke="#993556" stroke-width="1.2"/><line x1="4" y1="4" x2="9" y2="9" stroke="#993556" stroke-width="1.3"/><line x1="9" y1="4" x2="4" y2="9" stroke="#993556" stroke-width="1.3"/></svg>
+                        Antes
+                    </div>
+                    <ul class="ba-list">
+                        <li>Esperas largas sin saber cuánto falta</li>
+                        <li>No sabés a qué ventanilla ir</li>
+                        <li>Discusiones sobre quién llegó primero</li>
+                    </ul>
+                </div>
+                <div class="ba-arrow">→</div>
+                <div class="ba-card ba-after">
+                    <div class="ba-label">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="6" stroke="#3B6D11" stroke-width="1.2"/><polyline points="3.5,6.5 5.5,8.5 9.5,4.5" stroke="#3B6D11" stroke-width="1.3" fill="none"/></svg>
+                        Ahora
+                    </div>
+                    <ul class="ba-list">
+                        <li>Tomás tu turno en segundos desde el kiosco</li>
+                        <li>La pantalla te dice exactamente cuándo es tu momento</li>
+                        <li>Te dirigís directo a la ventanilla correcta</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- BENEFITS -->
+    <section class="section" id="funciones">
+        <div class="section-inner">
+            <div class="section-eyebrow">¿Cómo te ayuda?</div>
+            <div class="section-h">Una visita al banco, sin el estrés de siempre</div>
+            <div class="section-sub">Desde que entrás hasta que te atendemos, cada paso está pensado para que tu experiencia sea simple y sin sorpresas.</div>
+            <div class="feat-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+                <div class="feat-card">
+                    <div class="feat-icon" style="background: #E6F1FB;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <rect x="4" y="2" width="12" height="16" rx="2" stroke="#185FA5" stroke-width="1.3"/>
+                            <line x1="7" y1="7" x2="13" y2="7" stroke="#185FA5" stroke-width="1.3"/>
+                            <line x1="7" y1="10" x2="13" y2="10" stroke="#185FA5" stroke-width="1.3"/>
+                            <line x1="7" y1="13" x2="11" y2="13" stroke="#185FA5" stroke-width="1.3"/>
+                        </svg>
+                    </div>
+                    <div class="feat-title">Tu turno en segundos</div>
+                    <div class="feat-desc">Llegás al kiosco, elegís el trámite que necesitás y recibís tu ticket al instante. Sin formularios ni demoras.</div>
+                </div>
+                <div class="feat-card">
+                    <div class="feat-icon" style="background: #EAF3DE;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <circle cx="10" cy="10" r="7" stroke="#3B6D11" stroke-width="1.3"/>
+                            <polyline points="10,6 10,10.5 13,13" stroke="#3B6D11" stroke-width="1.3" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="feat-title">Siempre sabés cuánto falta</div>
+                    <div class="feat-desc">La pantalla en sala muestra en tiempo real qué turno se está atendiendo y cuáles son los próximos. No hay sorpresas.</div>
+                </div>
+                <div class="feat-card">
+                    <div class="feat-icon" style="background: #FAEEDA;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 2.5L12.5 8H18L13.5 11.5L15 17.5L10 14.5L5 17.5L6.5 11.5L2 8H7.5L10 2.5Z" stroke="#854F0B" stroke-width="1.3" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="feat-title">Atención preferencial garantizada</div>
+                    <div class="feat-desc">Si sos adulto mayor, persona con discapacidad o tenés prioridad especial, el sistema te ubica automáticamente en el lugar que corresponde.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- HOW IT WORKS -->
+    <section class="section" id="como-funciona" style="background: #f8fafc;">
+        <div class="section-inner">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start;">
+                <div>
+                    <div class="section-eyebrow">Cómo funciona</div>
+                    <div class="section-h">Del kiosco a la ventanilla en 4 pasos</div>
+                    <div class="section-sub" style="margin-bottom: 0;">Un proceso simple y claro para el cliente, y organizado para el banco.</div>
+                </div>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div class="step-body">
+                            <div class="step-title">Selecciona el servicio</div>
+                            <div class="step-desc">El cliente llega al kiosco en la entrada, escoge el servicio que necesita (caja, créditos, inversiones, etc.).</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <div class="step-body">
+                            <div class="step-title">Ingresa su DNI</div>
+                            <div class="step-desc">El sistema registra al cliente, le asigna una posición en la cola y emite un ticket con su número de turno.</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <div class="step-body">
+                            <div class="step-title">Espera con información</div>
+                            <div class="step-desc">La pantalla en sala muestra en tiempo real qué turno está siendo atendido y cuáles son los próximos.</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num" style="background: var(--blue);">4</div>
+                        <div class="step-body">
+                            <div class="step-title">Es llamado a la ventanilla</div>
+                            <div class="step-desc">El agente bancario llama al turno desde su panel. El cliente es atendido en la ventanilla correcta sin confusión.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <h2>¿Listo para ser atendido sin esperas?</h2>
+        <p>Solicita tu turno desde el kiosco en la entrada y sigue tu posición en tiempo real.</p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="/Kiosco" class="btn btn-hero-primary btn-lg">Tomar mi turno</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-brand">
+            <div class="nav-logo-icon" style="width:30px;height:30px;border-radius:8px;">
+                <svg viewBox="0 0 20 20" fill="none" style="width:16px;height:16px;">
+                    <rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+                    <rect x="11" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.55"/>
+                    <rect x="2" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.55"/>
+                    <rect x="11" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.3"/>
+                </svg>
+            </div>
+            <div>
+                <div class="footer-brand-name">Banco Argentum</div>
+                <div class="footer-brand-sub">Atención al cliente</div>
+            </div>
+        </div>
+        <div class="footer-links">
+            <a href="#">Privacidad</a>
+            <a href="#">Términos de uso</a>
+        </div>
+        <div class="footer-copy">© 2026 Banco Argentum. Todos los derechos reservados.</div>
+    </footer>
+
+</body>
+</html>

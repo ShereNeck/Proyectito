@@ -1,6 +1,0 @@
-﻿namespace Proyecto
-{
-    public class hola
-    {
-    }
-}

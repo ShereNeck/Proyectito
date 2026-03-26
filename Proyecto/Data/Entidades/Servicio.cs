@@ -17,5 +17,31 @@ namespace Proyecto.Data.Entidades
             VentanillaServicios = new HashSet<VentanillaServicio>();
             Tickets = new HashSet<Ticket>();
         }
+
+        public static Servicio Crear(string nombre, string prefijo, string descripcion,
+                                     int tiempoEstimado, string estado, Guid userId) => new()
+        {
+            ServicioId      = Guid.NewGuid(),
+            Nombre_Servicio = nombre,
+            Prefijo_Ticket  = prefijo,
+            Descripcion     = descripcion,
+            Tiempo_Estimado = tiempoEstimado,
+            Estado          = estado,
+            CreateBy        = userId,
+            ModifiedBy      = userId
+        };
+
+        public void Actualizar(string nombre, string prefijo, string descripcion,
+                               int tiempoEstimado, string estado, Guid userId)
+        {
+            Nombre_Servicio = nombre;
+            Prefijo_Ticket  = prefijo;
+            Descripcion     = descripcion;
+            Tiempo_Estimado = tiempoEstimado;
+            Estado          = estado;
+            ModifiedBy      = userId;
+        }
+
+        public void EliminarLogico(Guid userId) { Eliminado = true; ModifiedBy = userId; }
     }
 }

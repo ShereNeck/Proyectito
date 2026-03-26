@@ -18,5 +18,26 @@ namespace Proyecto.Data.Entidades
             AsignacionVentanillas = new HashSet<AsignacionVentanilla>();
             Tickets = new HashSet<Ticket>();
         }
+
+        public static Ventanilla Crear(string numero, string estado, Guid sucursalId,
+                                       Guid userId) => new()
+        {
+            VentanillaId      = Guid.NewGuid(),
+            Numero_Ventanilla = numero,
+            Estado_Ventanilla = estado,
+            SucursalId        = sucursalId,
+            CreateBy          = userId,
+            ModifiedBy        = userId
+        };
+
+        public void Actualizar(string numero, string estado, Guid sucursalId, Guid userId)
+        {
+            Numero_Ventanilla = numero;
+            Estado_Ventanilla = estado;
+            SucursalId        = sucursalId;
+            ModifiedBy        = userId;
+        }
+
+        public void EliminarLogico(Guid userId) { Eliminado = true; ModifiedBy = userId; }
     }
 }

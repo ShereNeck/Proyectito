@@ -1,0 +1,147 @@
+@{
+    ViewData["Title"] = "Acceso Cliente";
+    Layout = null;
+    string tab = ViewBag.Tab ?? "login";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>Banco Argentum — Cliente</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+</head>
+<body>
+<div class="kl-body" style="background:linear-gradient(145deg,#0D1B3E 0%,#1A3070 100%);min-height:100vh;">
+    <div style="width:100%;max-width:420px;padding:0 16px;">
+
+        <!-- Logo -->
+        <div style="text-align:center;margin-bottom:28px;">
+            <div style="width:52px;height:52px;background:var(--gold);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--navy);margin-bottom:12px;">A</div>
+            <h2 style="color:white;font-size:20px;font-weight:700;margin:0 0 4px;">Banco Argentum</h2>
+            <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;">Área de Clientes</p>
+        </div>
+
+        <!-- Tarjeta -->
+        <div style="background:white;border-radius:20px;padding:28px 28px 24px;box-shadow:0 24px 60px rgba(0,0,0,0.35);">
+
+            <!-- Tabs -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;background:#F3F4F6;border-radius:10px;padding:4px;margin-bottom:24px;">
+                <button onclick="setTab('login')" id="tab-login"
+                    style="border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;">
+                    Iniciar Sesión
+                </button>
+                <button onclick="setTab('registro')" id="tab-registro"
+                    style="border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;">
+                    Registrarse
+                </button>
+            </div>
+
+            <!-- === PANEL LOGIN === -->
+            <div id="panel-login">
+                @if (TempData["LoginError"] != null)
+                {
+                    <div style="background:#FEF2F2;color:#DC2626;border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:14px;">
+                        ⚠️ @TempData["LoginError"]
+                    </div>
+                }
+                <form method="post" asp-action="DoLogin" asp-controller="Cliente">
+                    <div class="modal-form-group">
+                        <label>Usuario</label>
+                        <input type="text" name="username" placeholder="Tu nombre de usuario" required />
+                    </div>
+                    <div class="modal-form-group" style="margin-bottom:20px;">
+                        <label>Contraseña</label>
+                        <input type="password" name="password" placeholder="••••••••" required />
+                    </div>
+                    <button type="submit" style="width:100%;background:var(--blue);color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">
+                        Ingresar →
+                    </button>
+                </form>
+            </div>
+
+            <!-- === PANEL REGISTRO === -->
+            <div id="panel-registro" style="display:none;">
+                @if (TempData["RegisterError"] != null)
+                {
+                    <div style="background:#FEF2F2;color:#DC2626;border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:14px;">
+                        ⚠️ @TempData["RegisterError"]
+                    </div>
+                }
+                <form method="post" asp-action="Registrar" asp-controller="Cliente">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div class="modal-form-group">
+                            <label>Nombre</label>
+                            <input type="text" name="nombre" placeholder="María" required />
+                        </div>
+                        <div class="modal-form-group">
+                            <label>Apellido</label>
+                            <input type="text" name="apellido" placeholder="López" required />
+                        </div>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>DNI</label>
+                        <input type="text" name="dni" placeholder="Ej: 0801200422317"
+                               maxlength="13" minlength="13" pattern="\d{13}"
+                               title="El DNI debe tener exactamente 13 dígitos numéricos"
+                               oninput="this.value=this.value.replace(/\D/g,'')"
+                               required />
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Correo electrónico</label>
+                        <input type="email" name="email" placeholder="correo@ejemplo.com" required />
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Fecha de nacimiento</label>
+                        <input type="date" name="fechaNacimiento" required />
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Usuario</label>
+                        <input type="text" name="username" placeholder="Ej: mlopez" required />
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Contraseña</label>
+                        <input type="password" name="password" placeholder="••••••••" required minlength="4" />
+                    </div>
+                    <div class="modal-form-group" style="margin-bottom:20px;">
+                        <label>Confirmar contraseña</label>
+                        <input type="password" name="confirmar" placeholder="••••••••" required minlength="4" />
+                    </div>
+                    <button type="submit" style="width:100%;background:var(--green);color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">
+                        Crear cuenta →
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Volver -->
+        <div style="text-align:center;margin-top:16px;">
+            <a href="/" style="color:rgba(255,255,255,0.4);font-size:12px;text-decoration:none;">← Volver al inicio</a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+var activeTab = '@tab';
+
+function setTab(t) {
+    activeTab = t;
+    var isLogin = t === 'login';
+    document.getElementById('panel-login').style.display    = isLogin ? 'block' : 'none';
+    document.getElementById('panel-registro').style.display = isLogin ? 'none'  : 'block';
+    document.getElementById('tab-login').style.background    = isLogin ? 'white' : 'transparent';
+    document.getElementById('tab-login').style.color         = isLogin ? '#0D1B3E' : '#6B7A99';
+    document.getElementById('tab-login').style.boxShadow     = isLogin ? '0 1px 4px rgba(0,0,0,0.1)' : 'none';
+    document.getElementById('tab-registro').style.background = isLogin ? 'transparent' : 'white';
+    document.getElementById('tab-registro').style.color      = isLogin ? '#6B7A99' : '#0D1B3E';
+    document.getElementById('tab-registro').style.boxShadow  = isLogin ? 'none' : '0 1px 4px rgba(0,0,0,0.1)';
+}
+setTab(activeTab);
+</script>
+</body>
+</html>

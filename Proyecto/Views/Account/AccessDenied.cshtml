@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "Acceso Denegado";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>Acceso Denegado — Banco Argentum</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+</head>
+<body>
+<div class="kl-body" style="background:linear-gradient(145deg,#0D1B3E 0%,#1A3070 100%);min-height:100vh;">
+    <div style="width:100%;max-width:420px;padding:0 16px;text-align:center;">
+
+        <!-- Logo -->
+        <div style="margin-bottom:32px;">
+            <div style="width:64px;height:64px;background:var(--gold);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:var(--navy);margin-bottom:14px;">A</div>
+            <div style="color:white;font-size:20px;font-weight:700;">Banco Argentum</div>
+            <div style="color:rgba(255,255,255,0.45);font-size:13px;margin-top:2px;">Sistema de Gestión de Turnos</div>
+        </div>
+
+        <!-- Tarjeta de error -->
+        <div style="background:white;border-radius:20px;padding:36px 28px;box-shadow:0 24px 60px rgba(0,0,0,0.35);">
+
+            <!-- Ícono de candado -->
+            <div style="width:72px;height:72px;background:#FEF2F2;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+            </div>
+
+            <h2 style="font-size:20px;font-weight:700;color:#0D1B3E;margin:0 0 10px;">Acceso Denegado</h2>
+            <p style="font-size:14px;color:#6B7A99;line-height:1.6;margin:0 0 28px;">
+                Lo sentimos, no puedes acceder a este apartado.<br>
+                No tienes los permisos necesarios para ver esta página.
+            </p>
+
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <a href="/" style="display:block;background:var(--navy);color:white;border-radius:10px;padding:13px;font-size:14px;font-weight:700;text-decoration:none;">
+                    ← Volver al inicio
+                </a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    @if (User.IsInRole("Administrador"))
+                    {
+                        <a href="/Admin" style="display:block;background:#F3F4F6;color:#0D1B3E;border-radius:10px;padding:13px;font-size:14px;font-weight:600;text-decoration:none;">
+                            Ir al panel de Administrador
+                        </a>
+                    }
+                    else if (User.IsInRole("Agente Bancario"))
+                    {
+                        <a href="/Agente" style="display:block;background:#F3F4F6;color:#0D1B3E;border-radius:10px;padding:13px;font-size:14px;font-weight:600;text-decoration:none;">
+                            Ir a mi panel de Agente
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Código de error -->
+        <p style="color:rgba(255,255,255,0.2);font-size:11px;margin-top:16px;">Error 403 · Acceso no autorizado</p>
+
+    </div>
+</div>
+</body>
+</html>

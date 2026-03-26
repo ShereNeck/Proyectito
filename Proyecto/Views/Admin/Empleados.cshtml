@@ -1,0 +1,365 @@
+@using Proyecto.Data.Entidades
+@using System.Text.Json
+@model IEnumerable<Empleado>
+@{
+    ViewData["Title"] = "Empleados";
+    var roles = ViewBag.Roles as List<Rol> ?? new();
+    var servicios = ViewBag.Servicios as List<Servicio> ?? new();
+
+    var rolesJson = JsonSerializer.Serialize(
+        roles.Select(r => new { id = r.RolId.ToString(), nombre = r.Nombre })
+    );
+}
+
+<div class="admin-body">
+    <div class="sidebar">
+        <a href="/Admin/Ventanillas" class="sidebar-item @(ViewBag.ActiveTab == "Ventanillas" ? "active" : "")"><span class="icon">🪟</span> Ventanillas</a>
+        <a href="/Admin/Servicios" class="sidebar-item @(ViewBag.ActiveTab == "Servicios" ? "active" : "")"><span class="icon">🏷️</span> Servicios</a>
+        <a href="/Admin/Sucursales" class="sidebar-item @(ViewBag.ActiveTab == "Sucursales" ? "active" : "")"><span class="icon">📍</span> Sucursales</a>
+        <a href="/Admin/Empleados" class="sidebar-item active"><span class="icon">👤</span> Empleados</a>
+        <a href="/Admin/Roles" class="sidebar-item @(ViewBag.ActiveTab == "Roles" ? "active" : "")"><span class="icon">🔐</span> Roles</a>
+        <a href="/Admin/Reportes" class="sidebar-item @(ViewBag.ActiveTab == "Reportes" ? "active" : "")"><span class="icon">📈</span> Reportes</a>
+    </div>
+
+    <div class="admin-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert-success">✅ @TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert-error">⚠️ @TempData["Error"]</div>
+        }
+
+        <div class="admin-top">
+            <h3>Gestión de Empleados</h3>
+            <button class="btn-add" onclick="openModal('modalCreate')">+ Nuevo Empleado</button>
+        </div>
+
+        <!-- Barra de filtros -->
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="filtroTexto" placeholder="🔍 Buscar por nombre, apellido o usuario..."
+                   oninput="debouncedBuscar()"
+                   style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;" />
+            <select id="filtroRol" onchange="buscar()"
+                    style="padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;background:white;">
+                <option value="">Todos los roles</option>
+                @foreach (var r in roles)
+                {
+                    <option value="@r.RolId">@r.Nombre</option>
+                }
+            </select>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr><th>#</th><th>Nombre</th><th>Apellido</th><th>Cargo / Servicio</th><th>Usuario</th><th>Rol</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+
+        <!-- Paginación -->
+        <div id="paginacion" style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:14px;flex-wrap:wrap;"></div>
+    </div>
+</div>
+
+<!-- ===================== MODAL CREAR ===================== -->
+<div id="modalCreate" class="modal-overlay d-none">
+    <div class="modal-box">
+        <h4>+ Nuevo Empleado</h4>
+        <form method="post" asp-action="Crear" asp-controller="Empleados">
+
+            <input type="hidden" id="createCargoHidden" name="Cargo" value="" />
+
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#6B7A99;letter-spacing:0.5px;margin-bottom:12px;">Datos personales</div>
+
+            <div class="modal-form-group">
+                <label>Nombre</label>
+                <input type="text" name="Nombre" placeholder="Ej: María" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Apellido</label>
+                <input type="text" name="Apellido" placeholder="Ej: López" required />
+            </div>
+
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#6B7A99;letter-spacing:0.5px;margin:16px 0 12px;">Rol y acceso</div>
+
+            <div class="modal-form-group">
+                <label>Rol</label>
+                @if (roles.Any())
+                {
+                    <select name="RolId" id="createRolSelect" required onchange="onRolChange(this)">
+                        <option value="">-- Seleccionar rol --</option>
+                        @foreach (var r in roles)
+                        {
+                            <option value="@r.RolId" data-nombre="@r.Nombre">@r.Nombre</option>
+                        }
+                    </select>
+                }
+                else
+                {
+                    <p style="color:#DC2626;font-size:13px;">⚠️ No hay roles disponibles. Crea al menos un rol primero.</p>
+                    <input type="hidden" name="RolId" value="" />
+                }
+            </div>
+
+            <div id="campoServicio" class="modal-form-group" style="display:none;">
+                <label>Servicio a atender</label>
+                <select id="createCargoSelect" onchange="document.getElementById('createCargoHidden').value = this.value">
+                    <option value="">-- Seleccionar servicio --</option>
+                    @foreach (var s in servicios)
+                    {
+                        <option value="@s.Nombre_Servicio">@s.Nombre_Servicio</option>
+                    }
+                </select>
+            </div>
+
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#6B7A99;letter-spacing:0.5px;margin:16px 0 12px;">Acceso al sistema</div>
+
+            <div class="modal-form-group">
+                <label>Nombre de usuario</label>
+                <input type="text" name="NombreUsuario" placeholder="Ej: mlopez" required />
+            </div>
+            <div class="modal-form-group" style="margin-bottom:20px;">
+                <label>Contraseña</label>
+                <input type="password" name="Contrasena" placeholder="••••••••" required />
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalCreate')">Cancelar</button>
+                <button type="submit" class="btn-save">Crear</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===================== MODAL EDITAR ===================== -->
+<div id="modalEdit" class="modal-overlay d-none">
+    <div class="modal-box">
+        <h4>✏️ Editar Empleado</h4>
+        <form method="post" asp-action="Editar" asp-controller="Empleados">
+            <input type="hidden" id="editId" name="EmpleadoId" />
+            <div class="modal-form-group">
+                <label>Nombre</label>
+                <input type="text" id="editNombre" name="Nombre" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Apellido</label>
+                <input type="text" id="editApellido" name="Apellido" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Servicio a atender <span style="font-size:11px;color:#9CA3AF;">(dejar en blanco si es Administrador)</span></label>
+                <select id="editCargo" name="Cargo">
+                    <option value="">— Sin servicio (Administrador) —</option>
+                    @foreach (var s in servicios)
+                    {
+                        <option value="@s.Nombre_Servicio">@s.Nombre_Servicio</option>
+                    }
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalEdit')">Cancelar</button>
+                <button type="submit" class="btn-save">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===================== MODAL ELIMINAR ===================== -->
+<div id="modalDelete" class="modal-overlay d-none">
+    <div class="modal-box" style="max-width:380px;text-align:center;">
+        <h4>🗑️ Eliminar Empleado</h4>
+        <p style="color:#6B7A99;font-size:13px;margin-bottom:16px;">¿Seguro que deseas eliminar a <b id="deleteNombre"></b>?<br><small>También se desactivará su acceso al sistema.</small></p>
+        <form method="post" asp-action="Eliminar" asp-controller="Empleados">
+            <input type="hidden" id="deleteId" name="EmpleadoId" />
+            <div class="modal-footer" style="justify-content:center;">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalDelete')">Cancelar</button>
+                <button type="submit" class="btn-del-confirm">Sí, eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var PAGE_SIZE    = 10;
+        var paginaActual = 1;
+        var todosLosDatos = [];
+        var _cache    = {};
+        var _debTimer = null;
+
+        var TODOS_ROLES = @Html.Raw(rolesJson);
+
+        function h(s) {
+            return (s == null ? '' : String(s))
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        // ── Llamada AJAX ─────────────────────────────────────────────────
+        function buscar() {
+            var rolId = document.getElementById('filtroRol').value;
+            var vm = {
+                Busqueda: document.getElementById('filtroTexto').value,
+                RolId:    rolId !== '' ? rolId : null
+            };
+            fetch('/Admin/Empleados/Buscar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vm)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                todosLosDatos = data;
+                paginaActual  = 1;
+                renderTabla();
+            });
+        }
+
+        function debouncedBuscar() {
+            clearTimeout(_debTimer);
+            _debTimer = setTimeout(buscar, 300);
+        }
+
+        // ── Construir fila ───────────────────────────────────────────────
+        function buildRow(item, num) {
+            _cache[item.empleadoId] = item;
+            var rolColor = item.esAdmin
+                ? 'background:#FFF3CD;color:#856404'
+                : 'background:#EEF2FF;color:#1A56DB';
+            return '<tr>' +
+                '<td>' + num + '</td>' +
+                '<td><b>' + h(item.nombre) + '</b></td>' +
+                '<td>' + h(item.apellido) + '</td>' +
+                '<td style="color:#6B7A99;">' + h(item.cargo || '—') + '</td>' +
+                '<td><span style="font-family:\'DM Mono\',monospace;font-size:12px;">' + h(item.usuario) + '</span></td>' +
+                '<td><span style="' + rolColor + ';padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">' + h(item.rol) + '</span></td>' +
+                '<td><div class="tbl-actions">' +
+                    '<button class="tbl-btn tbl-edit" onclick="openEditById(\'' + item.empleadoId + '\')">Editar</button>' +
+                    '<button class="tbl-btn tbl-del"  onclick="openDeleteById(\'' + item.empleadoId + '\')">Eliminar</button>' +
+                '</div></td>' +
+                '</tr>';
+        }
+
+        function renderTabla() {
+            var tbody  = document.getElementById('tbody');
+            _cache = {};
+            var inicio = (paginaActual - 1) * PAGE_SIZE;
+            var pagina = todosLosDatos.slice(inicio, inicio + PAGE_SIZE);
+
+            if (todosLosDatos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6B7A99;padding:20px;">No se encontraron resultados.</td></tr>';
+            } else {
+                tbody.innerHTML = pagina.map(function(item, idx) {
+                    return buildRow(item, inicio + idx + 1);
+                }).join('');
+            }
+            renderPaginacion();
+        }
+
+        function renderPaginacion() {
+            var total    = todosLosDatos.length;
+            var totalPag = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            var pag  = document.getElementById('paginacion');
+            var html = '<span style="font-size:12px;color:#6B7A99;margin-right:6px;">' + total + ' resultado(s)</span>';
+
+            if (totalPag > 1) {
+                var btnStyle = 'padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid ';
+                html += '<button onclick="irPagina(' + (paginaActual - 1) + ')" ' +
+                    (paginaActual === 1 ? 'disabled' : '') +
+                    ' style="' + btnStyle + '#E5E7EB;background:white;">‹</button>';
+
+                for (var p = 1; p <= totalPag; p++) {
+                    var activo = p === paginaActual;
+                    html += '<button onclick="irPagina(' + p + ')" style="' + btnStyle +
+                        (activo ? '#1A56DB;background:#1A56DB;color:white;font-weight:600' : '#E5E7EB;background:white;color:#374151') +
+                        ';">' + p + '</button>';
+                }
+
+                html += '<button onclick="irPagina(' + (paginaActual + 1) + ')" ' +
+                    (paginaActual === totalPag ? 'disabled' : '') +
+                    ' style="' + btnStyle + '#E5E7EB;background:white;">›</button>';
+            }
+            pag.innerHTML = html;
+        }
+
+        function irPagina(p) {
+            var totalPag = Math.ceil(todosLosDatos.length / PAGE_SIZE);
+            if (p < 1 || p > totalPag) return;
+            paginaActual = p;
+            renderTabla();
+        }
+
+        // ── Abrir modales desde cache ────────────────────────────────────
+        function openEditById(id) {
+            var d = _cache[id];
+            openEdit(d.empleadoId, d.nombre, d.apellido, d.cargo);
+        }
+        function openDeleteById(id) {
+            var d = _cache[id];
+            openDelete(d.empleadoId, d.nombre + ' ' + d.apellido);
+        }
+
+        // ── Lógica Agente ────────────────────────────────────────────────
+        function esRolAgente(nombre) {
+            return nombre.toLowerCase().indexOf('agente') !== -1;
+        }
+
+        function onRolChange(sel) {
+            var opt    = sel.options[sel.selectedIndex];
+            var nombre = opt ? (opt.getAttribute('data-nombre') || '') : '';
+            var campoSrv  = document.getElementById('campoServicio');
+            var selectSrv = document.getElementById('createCargoSelect');
+
+            if (esRolAgente(nombre)) {
+                campoSrv.style.display = '';
+                selectSrv.required = true;
+                document.getElementById('createCargoHidden').value = selectSrv.value;
+            } else {
+                campoSrv.style.display = 'none';
+                selectSrv.required = false;
+                document.getElementById('createCargoHidden').value = '';
+            }
+        }
+
+        // ── Modales ──────────────────────────────────────────────────────
+        function openModal(id)  { document.getElementById(id).classList.remove('d-none'); }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('d-none');
+            if (id === 'modalCreate') {
+                var rolSel = document.getElementById('createRolSelect');
+                if (rolSel) { rolSel.selectedIndex = 0; onRolChange(rolSel); }
+                document.getElementById('createCargoHidden').value = '';
+            }
+        }
+
+        function openEdit(id, nombre, apellido, cargo) {
+            document.getElementById('editId').value       = id;
+            document.getElementById('editNombre').value   = nombre;
+            document.getElementById('editApellido').value = apellido;
+            var sel = document.getElementById('editCargo');
+            var matched = false;
+            for (var i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === cargo) { sel.selectedIndex = i; matched = true; break; }
+            }
+            if (!matched) sel.selectedIndex = 0;
+            openModal('modalEdit');
+        }
+
+        function openDelete(id, nombre) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteNombre').textContent = nombre;
+            openModal('modalDelete');
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(function(m) {
+            m.addEventListener('click', function(e) { if (e.target === m) m.classList.add('d-none'); });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var rolSel = document.getElementById('createRolSelect');
+            if (rolSel) onRolChange(rolSel);
+            buscar();
+        });
+    </script>
+}
