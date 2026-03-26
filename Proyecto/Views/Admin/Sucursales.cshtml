@@ -1,0 +1,273 @@
+@using Proyecto.Data.Entidades
+@model IEnumerable<Sucursal>
+@{
+    ViewData["Title"] = "Sucursales";
+}
+
+<div class="admin-body">
+    <div class="sidebar">
+        <a href="/Admin/Index" class="sidebar-item @(ViewBag.ActiveTab == "Ventanillas" ? "active" : "")"><span class="icon">🪟</span> Ventanillas</a>
+        <a href="/Admin/Servicios" class="sidebar-item @(ViewBag.ActiveTab == "Servicios" ? "active" : "")"><span class="icon">🏷️</span> Servicios</a>
+        <a href="/Admin/Sucursales" class="sidebar-item @(ViewBag.ActiveTab == "Sucursales" ? "active" : "")"><span class="icon">📍</span> Sucursales</a>
+        <a href="/Admin/Empleados" class="sidebar-item @(ViewBag.ActiveTab == "Empleados" ? "active" : "")"><span class="icon">👤</span> Empleados</a>
+        <a href="/Admin/Roles" class="sidebar-item @(ViewBag.ActiveTab == "Roles" ? "active" : "")"><span class="icon">🔐</span> Roles</a>
+        <a href="/Admin/Reportes" class="sidebar-item @(ViewBag.ActiveTab == "Reportes" ? "active" : "")"><span class="icon">📈</span> Reportes</a>
+    </div>
+
+    <div class="admin-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert-success">✅ @TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert-error">⚠️ @TempData["Error"]</div>
+        }
+
+        <div class="admin-top">
+            <h3>Gestión de Sucursales</h3>
+            <button class="btn-add" onclick="openModal('modalCreate')">+ Nueva Sucursal</button>
+        </div>
+
+        <!-- Barra de filtros -->
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="filtroTexto" placeholder="🔍 Buscar por nombre o dirección..."
+                   oninput="debouncedBuscar()"
+                   style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;" />
+            <select id="filtroEstado" onchange="buscar()"
+                    style="padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;background:white;">
+                <option value="">Todos los estados</option>
+                <option value="Activa">Activa</option>
+                <option value="Inactiva">Inactiva</option>
+            </select>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr><th>#</th><th>Nombre</th><th>Dirección</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+
+        <!-- Paginación -->
+        <div id="paginacion" style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:14px;flex-wrap:wrap;"></div>
+    </div>
+</div>
+
+<!-- MODAL CREAR -->
+<div id="modalCreate" class="modal-overlay d-none">
+    <div class="modal-box">
+        <h4>+ Nueva Sucursal</h4>
+        <form method="post" asp-action="Crear" asp-controller="Sucursales">
+            <div class="modal-form-group">
+                <label>Nombre</label>
+                <input type="text" name="Nombre" placeholder="Ej: Sucursal Norte" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Dirección</label>
+                <input type="text" name="Direccion" placeholder="Ej: Av. Corrientes 1234" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Teléfono</label>
+                <input type="text" name="Telefono" placeholder="Ej: 011-4500-5678" />
+            </div>
+            <div class="modal-form-group">
+                <label>Estado</label>
+                <select name="Estado">
+                    <option value="Activa">Activa</option>
+                    <option value="Inactiva">Inactiva</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalCreate')">Cancelar</button>
+                <button type="submit" class="btn-save">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div id="modalEdit" class="modal-overlay d-none">
+    <div class="modal-box">
+        <h4>✏️ Editar Sucursal</h4>
+        <form method="post" asp-action="Editar" asp-controller="Sucursales">
+            <input type="hidden" id="editId" name="SucursalId" />
+            <div class="modal-form-group">
+                <label>Nombre</label>
+                <input type="text" id="editNombre" name="Nombre" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Dirección</label>
+                <input type="text" id="editDireccion" name="Direccion" required />
+            </div>
+            <div class="modal-form-group">
+                <label>Teléfono</label>
+                <input type="text" id="editTelefono" name="Telefono" />
+            </div>
+            <div class="modal-form-group">
+                <label>Estado</label>
+                <select id="editEstado" name="Estado">
+                    <option value="Activa">Activa</option>
+                    <option value="Inactiva">Inactiva</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalEdit')">Cancelar</button>
+                <button type="submit" class="btn-save">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL ELIMINAR -->
+<div id="modalDelete" class="modal-overlay d-none">
+    <div class="modal-box" style="max-width:380px;text-align:center;">
+        <h4>🗑️ Eliminar Sucursal</h4>
+        <p style="color:#6B7A99;font-size:13px;margin-bottom:16px;">¿Seguro que deseas eliminar <b id="deleteNombre"></b>?</p>
+        <form method="post" asp-action="Eliminar" asp-controller="Sucursales">
+            <input type="hidden" id="deleteId" name="SucursalId" />
+            <div class="modal-footer" style="justify-content:center;">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalDelete')">Cancelar</button>
+                <button type="submit" class="btn-del-confirm">Sí, eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var PAGE_SIZE    = 10;
+        var paginaActual = 1;
+        var todosLosDatos = [];
+        var _cache    = {};
+        var _debTimer = null;
+
+        function h(s) {
+            return (s == null ? '' : String(s))
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        function buscar() {
+            var vm = {
+                Busqueda: document.getElementById('filtroTexto').value,
+                Estado:   document.getElementById('filtroEstado').value
+            };
+            fetch('/Admin/Sucursales/Buscar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vm)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                todosLosDatos = data;
+                paginaActual  = 1;
+                renderTabla();
+            });
+        }
+
+        function debouncedBuscar() {
+            clearTimeout(_debTimer);
+            _debTimer = setTimeout(buscar, 300);
+        }
+
+        function buildRow(item, num) {
+            _cache[item.sucursalId] = item;
+            var badge = item.estado === 'Activa'
+                ? '<span class="pill-active2">Activa</span>'
+                : '<span class="pill-inactive">' + h(item.estado) + '</span>';
+            return '<tr>' +
+                '<td>' + num + '</td>' +
+                '<td><b>' + h(item.nombre) + '</b></td>' +
+                '<td style="color:#6B7A99;">' + h(item.direccion) + '</td>' +
+                '<td>' + h(item.telefono || '—') + '</td>' +
+                '<td>' + badge + '</td>' +
+                '<td><div class="tbl-actions">' +
+                    '<button class="tbl-btn tbl-edit" onclick="openEditById(\'' + item.sucursalId + '\')">Editar</button>' +
+                    '<button class="tbl-btn tbl-del"  onclick="openDeleteById(\'' + item.sucursalId + '\')">Eliminar</button>' +
+                '</div></td>' +
+                '</tr>';
+        }
+
+        function renderTabla() {
+            var tbody  = document.getElementById('tbody');
+            _cache = {};
+            var inicio = (paginaActual - 1) * PAGE_SIZE;
+            var pagina = todosLosDatos.slice(inicio, inicio + PAGE_SIZE);
+
+            if (todosLosDatos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#6B7A99;padding:20px;">No se encontraron resultados.</td></tr>';
+            } else {
+                tbody.innerHTML = pagina.map(function(item, idx) {
+                    return buildRow(item, inicio + idx + 1);
+                }).join('');
+            }
+            renderPaginacion();
+        }
+
+        function renderPaginacion() {
+            var total    = todosLosDatos.length;
+            var totalPag = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            var pag  = document.getElementById('paginacion');
+            var html = '<span style="font-size:12px;color:#6B7A99;margin-right:6px;">' + total + ' resultado(s)</span>';
+
+            if (totalPag > 1) {
+                var btnStyle = 'padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid ';
+                html += '<button onclick="irPagina(' + (paginaActual - 1) + ')" ' +
+                    (paginaActual === 1 ? 'disabled' : '') +
+                    ' style="' + btnStyle + '#E5E7EB;background:white;">‹</button>';
+
+                for (var p = 1; p <= totalPag; p++) {
+                    var activo = p === paginaActual;
+                    html += '<button onclick="irPagina(' + p + ')" style="' + btnStyle +
+                        (activo ? '#1A56DB;background:#1A56DB;color:white;font-weight:600' : '#E5E7EB;background:white;color:#374151') +
+                        ';">' + p + '</button>';
+                }
+
+                html += '<button onclick="irPagina(' + (paginaActual + 1) + ')" ' +
+                    (paginaActual === totalPag ? 'disabled' : '') +
+                    ' style="' + btnStyle + '#E5E7EB;background:white;">›</button>';
+            }
+            pag.innerHTML = html;
+        }
+
+        function irPagina(p) {
+            var totalPag = Math.ceil(todosLosDatos.length / PAGE_SIZE);
+            if (p < 1 || p > totalPag) return;
+            paginaActual = p;
+            renderTabla();
+        }
+
+        function openEditById(id) {
+            var d = _cache[id];
+            openEdit(d.sucursalId, d.nombre, d.direccion, d.telefono, d.estado);
+        }
+        function openDeleteById(id) {
+            var d = _cache[id];
+            openDelete(d.sucursalId, d.nombre);
+        }
+
+        function openModal(id)  { document.getElementById(id).classList.remove('d-none'); }
+        function closeModal(id) { document.getElementById(id).classList.add('d-none'); }
+
+        function openEdit(id, nombre, dir, tel, estado) {
+            document.getElementById('editId').value        = id;
+            document.getElementById('editNombre').value    = nombre;
+            document.getElementById('editDireccion').value = dir;
+            document.getElementById('editTelefono').value  = tel || '';
+            document.getElementById('editEstado').value    = estado;
+            openModal('modalEdit');
+        }
+        function openDelete(id, nombre) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteNombre').textContent = nombre;
+            openModal('modalDelete');
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(function(m) {
+            m.addEventListener('click', function(e) { if (e.target === m) m.classList.add('d-none'); });
+        });
+
+        document.addEventListener('DOMContentLoaded', buscar);
+    </script>
+}
