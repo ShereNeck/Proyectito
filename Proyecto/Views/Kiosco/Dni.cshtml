@@ -1,0 +1,87 @@
+@{
+    ViewData["Title"] = "Ingrese su DNI";
+}
+
+<div class="kl-body">
+    <div class="kl-wrap" style="max-width:520px;">
+
+        <div class="kl-card" style="padding:32px 28px;">
+
+            <a href="/Kiosco" class="kl-back">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Volver
+            </a>
+
+            <div class="kl-dni-header">
+                <div class="kl-dni-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 7h3m4 0h9M4 12h9m4 0h3M4 17h3m4 0h9"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2>Ingrese su DNI</h2>
+                    <p>Para continuar con la solicitud de turno</p>
+                </div>
+            </div>
+
+            <form method="post" asp-action="GenerarTicket" id="dniForm">
+                <input type="hidden" name="servicioId" value="@ViewBag.ServicioId" />
+                <input type="hidden" name="esPrioritario" value="false" />
+
+                <div class="kl-dni-display" id="dniDisplay">0000000000</div>
+                <input type="hidden" name="dni" id="dniHidden" value="" />
+
+                <div class="kl-keypad">
+                    @foreach (var n in new[]{"1","2","3","4","5","6","7","8","9"})
+                    {
+                        <button type="button" class="kl-key" onclick="addDigit('@n')">@n</button>
+                    }
+                    <button type="button" class="kl-key kl-key-del" onclick="delDigit()">Borrar</button>
+                    <button type="button" class="kl-key" onclick="addDigit('0')">0</button>
+                    <div></div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6B7A99;cursor:pointer;">
+                        <input type="checkbox" name="esPrioritario" value="true" style="width:16px;height:16px;" />
+                        Adulto mayor, embarazada o persona con discapacidad (turno prioritario)
+                    </label>
+                </div>
+
+                <button type="submit" class="kl-btn-continuar" id="btnContinuar" disabled>
+                    Continuar &nbsp; →
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let digits = '';
+
+function addDigit(d) {
+    if (digits.length >= 10) return;
+    digits += d;
+    update();
+}
+function delDigit() {
+    digits = digits.slice(0, -1);
+    update();
+}
+function update() {
+    const display = document.getElementById('dniDisplay');
+    const hidden  = document.getElementById('dniHidden');
+    const btn     = document.getElementById('btnContinuar');
+    const padded  = digits.padEnd(10, '0');
+    display.textContent = padded;
+    display.style.color = digits.length > 0 ? '#0D1B3E' : '#9CA3AF';
+    hidden.value = digits;
+    btn.disabled = digits.length < 7;
+    btn.style.opacity = digits.length < 7 ? '0.5' : '1';
+}
+update();
+</script>
+}

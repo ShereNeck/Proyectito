@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "Turno Generado";
+    var numero   = ViewBag.NumeroTicket as string ?? "---";
+    var servicio = ViewBag.Servicio     as string ?? "";
+    int personas = (int)(ViewBag.PersonasAntes ?? 0);
+}
+
+<div class="kl-body">
+    <div class="kl-wrap" style="max-width:480px;">
+        <div class="kl-card kl-ticket-confirm">
+
+            <div class="kl-success-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6L9 17l-5-5"/>
+                </svg>
+            </div>
+
+            <p class="kl-confirm-title">Su turno ha sido generado</p>
+
+            <div class="kl-ticket-num-box">
+                <div class="kl-ticket-label">Número de Turno</div>
+                <div class="kl-ticket-num">@numero</div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(servicio))
+            {
+                <div class="kl-ticket-detail">
+                    <span class="kl-detail-label">Servicio</span>
+                    <span class="kl-detail-val">@servicio</span>
+                </div>
+            }
+
+            <h3 class="kl-wait-title">Espere a ser llamado</h3>
+            <p class="kl-wait-sub">Por favor permanezca atento a la pantalla</p>
+
+            <div class="kl-personas-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A56DB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                </svg>
+                <div>
+                    <div style="font-size:12px;color:#1A56DB;font-weight:600;">Personas antes que usted</div>
+                    <div style="font-size:28px;font-weight:700;color:#0D1B3E;font-family:'DM Mono',monospace;">@personas</div>
+                </div>
+            </div>
+
+            <p class="kl-time-note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                El tiempo estimado de espera puede variar
+            </p>
+
+            <a href="/Kiosco" class="kl-btn-volver" id="btnVolver">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Volver al Inicio
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let secs = 20;
+const btn = document.getElementById('btnVolver');
+(function tick() {
+    secs--;
+    if (secs <= 0) { window.location.href = '/Kiosco'; return; }
+    btn.querySelector('svg').outerHTML; // keep icon
+    btn.lastChild.textContent = ` Volver al Inicio (${secs}s)`;
+    setTimeout(tick, 1000);
+})();
+</script>
+}
