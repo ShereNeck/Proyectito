@@ -1,8 +1,303 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Banco Argentum";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Banco Argentum — Sistema de Turnos</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed-variant": "#004b73",
+                        "on-primary-fixed":           "#001b3c",
+                        "primary":                    "#001e40",
+                        "primary-fixed":              "#d5e3ff",
+                        "surface-tint":               "#3a5f94",
+                        "outline-variant":            "#c3c6d1",
+                        "on-primary-container":       "#799dd6",
+                        "on-secondary-container":     "#003a5c",
+                        "surface-container-high":     "#e6e8ea",
+                        "primary-fixed-dim":          "#a7c8ff",
+                        "surface-container":          "#eceef0",
+                        "primary-container":          "#003366",
+                        "surface-container-highest":  "#e0e3e5",
+                        "secondary":                  "#006398",
+                        "on-primary":                 "#ffffff",
+                        "surface-variant":            "#e0e3e5",
+                        "on-surface":                 "#191c1e",
+                        "surface-container-lowest":   "#ffffff",
+                        "on-tertiary":                "#ffffff",
+                        "inverse-primary":            "#a7c8ff",
+                        "on-error":                   "#ffffff",
+                        "secondary-fixed-dim":        "#93ccff",
+                        "on-primary-fixed-variant":   "#1f477b",
+                        "error":                      "#ba1a1a",
+                        "secondary-fixed":            "#cce5ff",
+                        "background":                 "#f7f9fb",
+                        "outline":                    "#737780",
+                        "surface-bright":             "#f7f9fb",
+                        "on-secondary-fixed":         "#001d31",
+                        "surface-container-low":      "#f2f4f6",
+                        "surface":                    "#f7f9fb",
+                        "on-secondary":               "#ffffff",
+                        "secondary-container":        "#00a9fd",
+                        "on-surface-variant":         "#43474f",
+                        "inverse-on-surface":         "#eff1f3",
+                        "surface-dim":                "#d8dadc",
+                        "inverse-surface":            "#2d3133",
+                        "on-background":              "#191c1e"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body":     ["Inter"],
+                        "label":    ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg":      "0.25rem",
+                        "xl":      "0.5rem",
+                        "2xl":     "0.75rem",
+                        "3xl":     "1rem",
+                        "full":    "9999px"
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-secondary-fixed selection:text-on-secondary-fixed">
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- ══ TopNavBar ══ -->
+<nav class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/20 shadow-sm">
+    <div class="flex justify-between items-center px-8 h-16 max-w-7xl mx-auto">
+
+        <!-- Logo + nombre + links (todo a la izquierda) -->
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-2.5">
+                <img src="/img/logo_argentum.jpeg" alt="Banco Argentum" class="h-8 w-8 object-contain rounded-sm"/>
+                <span class="text-lg font-bold tracking-tight text-sky-950 dark:text-white">Banco Argentum</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8 font-sans antialiased text-sm tracking-tight">
+                <a class="text-slate-600 dark:text-slate-400 hover:text-sky-900 dark:hover:text-sky-100 transition-colors" href="#servicios">Servicios</a>
+                <a class="text-slate-600 dark:text-slate-400 hover:text-sky-900 dark:hover:text-sky-100 transition-colors" href="#beneficios">Beneficios</a>
+                <a class="text-slate-600 dark:text-slate-400 hover:text-sky-900 dark:hover:text-sky-100 transition-colors" href="#acerca-de">Acerca de</a>
+            </div>
+        </div>
+
+        <!-- Botón login (derecha) -->
+            <a href="https://localhost:7182/Login"
+           class="text-sm font-semibold text-sky-950 dark:text-white border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            Iniciar sesión
+        </a>
+
+    </div>
+</nav>
+
+<main>
+
+    <!-- ══ Hero Section ══ -->
+    <section class="relative min-h-[60vh] flex items-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img class="w-full h-full object-cover grayscale-[20%] brightness-[0.85]"
+                 alt="Ultra-modern bank interior with clean white surfaces"
+                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrSv35OGttrVMDlTTa-BB7YnLfTjv-O_E4ExCu6Dgm4p28yn-lxyHH1tlA-U0TP7ilWQ-ByUnFhJY1cvGIwaOEJJVHgZ5cOEtq6I8ArG4f6x1HNehjrlkmwC1160mT_gRnQzVuYX2MUu-ErkuvgYB5TDUpmM3Ht-kvxrfI9PYXiM4OT0rgUT8HsauZdL_kZigv47JDrX0gZkkAE9OyWAQZn-XVFMPExojDCM7uR-5E3LBvNe1tjkr299XRHb66KVjnyttkl9DsCKI"/>
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/40 to-transparent"></div>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto px-8 w-full grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div class="space-y-6 py-12">
+                <h1 class="text-5xl md:text-7xl font-bold text-white tracking-tighter leading-[1.1]">
+                    Transformamos la <span class="text-secondary-fixed">espera</span> en <br/> eficiencia
+                </h1>
+                <p class="text-lg md:text-xl text-slate-200 max-w-lg leading-relaxed font-light">
+                    Reinventamos la experiencia bancaria mediante tecnología de flujo inteligente. Optimice la atención al cliente con nuestro sistema Sterling de gestión avanzada.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                    <a href="/Account/Login?tab=cliente"
+                       class="bg-secondary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-secondary/90 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-2">
+                        Prueba el Sistema
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </a>
+                    <button class="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-all flex items-center justify-center">
+                        Ver Video
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ Servicios Section ══ -->
+    <section class="py-32 bg-surface" id="servicios">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl md:text-5xl font-bold text-primary tracking-tight">Ofrecemos los siguientes servicios</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Caja / Pagos -->
+                <div class="bg-surface-container-lowest rounded-2xl p-10 group hover:bg-primary transition-all duration-500 shadow-sm border border-outline-variant/10">
+                    <div class="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-400 transition-colors">
+                        <span class="material-symbols-outlined text-white text-3xl">account_balance_wallet</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-primary mb-3 group-hover:text-white transition-colors">Caja / Pagos</h3>
+                    <p class="text-on-surface-variant group-hover:text-slate-300 transition-colors leading-relaxed">
+                        Depósitos, retiros y pagos. Gestión ágil de operaciones de caja con atención personalizada.
+                    </p>
+                </div>
+
+                <!-- Apertura de Cuenta -->
+                <div class="bg-surface-container-lowest rounded-2xl p-10 group hover:bg-primary transition-all duration-500 shadow-sm border border-outline-variant/10">
+                    <div class="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-400 transition-colors">
+                        <span class="material-symbols-outlined text-white text-3xl">person_add</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-primary mb-3 group-hover:text-white transition-colors">Apertura de Cuenta</h3>
+                    <p class="text-on-surface-variant group-hover:text-slate-300 transition-colors leading-relaxed">
+                        Abrir una nueva cuenta bancaria de forma rápida, segura y sin complicaciones.
+                    </p>
+                </div>
+
+                <!-- Créditos -->
+                <div class="bg-surface-container-lowest rounded-2xl p-10 group hover:bg-primary transition-all duration-500 shadow-sm border border-outline-variant/10">
+                    <div class="w-16 h-16 bg-purple-500 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-400 transition-colors">
+                        <span class="material-symbols-outlined text-white text-3xl">credit_card</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-primary mb-3 group-hover:text-white transition-colors">Créditos</h3>
+                    <p class="text-on-surface-variant group-hover:text-slate-300 transition-colors leading-relaxed">
+                        Solicitudes y consultas de crédito. Asesoría financiera para encontrar la mejor opción.
+                    </p>
+                </div>
+
+                <!-- Atención General -->
+                <div class="bg-surface-container-lowest rounded-2xl p-10 group hover:bg-primary transition-all duration-500 shadow-sm border border-outline-variant/10">
+                    <div class="w-16 h-16 bg-orange-400 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-300 transition-colors">
+                        <span class="material-symbols-outlined text-white text-3xl">help</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-primary mb-3 group-hover:text-white transition-colors">Atención General</h3>
+                    <p class="text-on-surface-variant group-hover:text-slate-300 transition-colors leading-relaxed">
+                        Consultas y asesoramiento general. Estamos aquí para resolver cualquier duda o necesidad.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ Beneficios Section (Bento Grid) ══ -->
+    <section class="py-32 bg-surface-container-low" id="beneficios">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl font-bold text-primary tracking-tight mb-4">Eficiencia que se traduce en resultados</h2>
+                <div class="w-20 h-1 bg-secondary mx-auto"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-6 h-auto md:h-[300px]">
+
+                <!-- Reducción de filas -->
+                <div class="md:col-span-3 bg-primary-container rounded-2xl p-10 flex flex-col justify-between text-white shadow-xl">
+                    <div>
+                        <span class="material-symbols-outlined text-secondary-fixed text-4xl mb-6">trending_down</span>
+                        <h3 class="text-3xl font-bold mb-4">Reducción de filas</h3>
+                        <p class="text-slate-300 max-w-sm">Algoritmos de distribución de carga que reducen el tiempo de espera físico hasta en un 40%.</p>
+                    </div>
+                    <div class="text-5xl font-black text-white/20">-40%</div>
+                </div>
+
+                <!-- Orden en la atención -->
+                <div class="md:col-span-3 bg-surface-container-lowest rounded-2xl p-10 flex flex-col justify-between border border-outline-variant/10 shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-2xl font-bold text-primary mb-2">Orden en la atención</h3>
+                            <p class="text-on-surface-variant">Flujos personalizados según el tipo de trámite y perfil del cliente.</p>
+                        </div>
+                        <span class="material-symbols-outlined text-secondary text-3xl">diversity_3</span>
+                    </div>
+                    <div class="mt-8 flex gap-2">
+                        <div class="h-1 bg-secondary flex-1 rounded-full"></div>
+                        <div class="h-1 bg-secondary flex-1 rounded-full"></div>
+                        <div class="h-1 bg-secondary/30 flex-1 rounded-full"></div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ Acerca de Section ══ -->
+    <section class="py-32 bg-surface" id="acerca-de">
+        <div class="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+            <div class="relative">
+                <div class="aspect-square bg-surface-container-high rounded-2xl overflow-hidden relative z-10">
+                    <img class="w-full h-full object-cover"
+                         alt="Professional bank representative assisting a client"
+                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXnBNDzDg5eohwyQChpZxqnyuPiG4aoALveq9LWkM1XfKWOn987vIOY3JHGpZD-wwgSiFdB7NhUvyyeth6nnC7QN-43WTRobzmAmKc9uWHMWyCSUQV7poHFKBevU1BzMFMSNrkAJFiLj3a8MgTNlLS01K1GqVdCrUCchzaSUwpJ112hQ6-4vEvv3vw9cLM005MwqAU_OG_U7lxb0rk7bxTcnppJsipgVQ3FT-dE5VYLStvJxzdswBHD5kronzpYAtVd3NdK3hhois"/>
+                </div>
+                <div class="absolute -bottom-6 -right-6 w-48 h-48 bg-secondary/10 rounded-2xl -z-0"></div>
+                <div class="absolute -top-6 -left-6 w-48 h-48 bg-primary/5 rounded-full -z-0"></div>
+            </div>
+            <div class="space-y-8">
+                <span class="text-secondary font-bold tracking-widest text-xs uppercase">Nuestra Misión</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-primary tracking-tighter leading-tight">Elevando la Experiencia del Cliente</h2>
+                <p class="text-lg text-on-surface-variant leading-relaxed">
+                    En Banco Argentum, creemos que la banca moderna no se trata solo de transacciones, sino de respeto por el tiempo de las personas.
+                </p>
+                <p class="text-on-surface-variant leading-relaxed">
+                    Nuestra misión es fusionar la solidez de las instituciones financieras tradicionales con la agilidad del mundo digital. Desarrollamos soluciones Sterling para que cada visita a nuestras sucursales sea fluida, productiva y gratificante.
+                </p>
+            </div>
+        </div>
+    </section>
+
+
+</main>
+
+<!-- ══ Footer ══ -->
+<footer class="w-full py-10 px-8 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+
+        <!-- Banco Argentum -->
+        <div>
+            <div class="text-lg font-bold text-sky-950 dark:text-white mb-3">Banco Argentum</div>
+            <p class="text-xs md:text-sm font-sans text-slate-500 dark:text-slate-400">
+                Líderes en tecnología de gestión de flujo para instituciones financieras de alto nivel.
+            </p>
+        </div>
+
+        <!-- Legal -->
+        <div class="space-y-3">
+            <h4 class="text-sky-950 dark:text-white font-semibold text-sm">Legal</h4>
+            <ul class="space-y-2">
+                <li><a class="text-xs md:text-sm font-sans text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-300 transition-colors" href="#">Privacidad</a></li>
+                <li><a class="text-xs md:text-sm font-sans text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-300 transition-colors" href="#">Términos y Condiciones</a></li>
+            </ul>
+        </div>
+
+        <!-- Soporte -->
+        <div class="space-y-3">
+            <h4 class="text-sky-950 dark:text-white font-semibold text-sm">Soporte</h4>
+            <ul class="space-y-2">
+                <li><a class="text-xs md:text-sm font-sans text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-300 transition-colors" href="#">Contacto</a></li>
+                <li><a class="text-xs md:text-sm font-sans text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-300 transition-colors" href="#">Seguridad</a></li>
+            </ul>
+        </div>
+
+    </div>
+    <div class="max-w-7xl mx-auto mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 text-center">
+        <p class="text-xs md:text-sm font-sans text-slate-500 dark:text-slate-400">© 2026 Banco Argentum. Todos los derechos reservados.</p>
+    </div>
+</footer>
+
+</body>
+</html>
