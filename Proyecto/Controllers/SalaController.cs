@@ -22,12 +22,12 @@ namespace Proyecto.Controllers
 
         public async Task<IActionResult> GetQueueData()
         {
-             var currentTicket = await _context.Tickets.Include(t => t.Servicio).Include(t => t.Ventanilla).Where(t => t.Estado_Ticket == "En atención" && !t.Eliminado).OrderByDescending(t => t.Hora_Atencion)
-                .Select(t => new { 
-                    numeroTicket = t.Numero_Ticket, 
-                    ventanilla = t.Ventanilla.Numero_Ventanilla, 
-                    servicio = t.Servicio.Nombre_Servicio 
-                }).FirstOrDefaultAsync();
+            var currentTicket = await _context.Tickets.Include(t => t.Servicio).Include(t => t.Ventanilla).Where(t => t.Estado_Ticket == "En atención" && !t.Eliminado).OrderByDescending(t => t.Hora_Atencion)
+               .Select(t => new {
+                   numeroTicket = t.Numero_Ticket,
+                   ventanilla = t.Ventanilla.Numero_Ventanilla,
+                   servicio = t.Servicio.Nombre_Servicio
+               }).FirstOrDefaultAsync();
 
             var nextTickets = await _context.Tickets
                 .Include(t => t.Servicio)
