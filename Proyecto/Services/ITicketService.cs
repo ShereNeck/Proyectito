@@ -10,7 +10,7 @@ namespace Proyecto.Services
 {
     public interface ITicketService
     {
-        Task<Ticket> GenerarTicketAsync(Guid servicioId, Guid sucursalId, bool esPrioritario = false);
+        Task<Ticket> GenerarTicketAsync(Guid servicioId, Guid sucursalId, Guid? clienteId = null);
         Task<List<Ticket>> ObtenerTicketsEnEsperaAsync(Guid sucursalId);
         Task<Ticket?> ObtenerTicketActualPorVentanillaAsync(Guid ventanillaId);
     }
@@ -24,7 +24,7 @@ namespace Proyecto.Services
             _context = context;
         }
 
-        public async Task<Ticket> GenerarTicketAsync(Guid servicioId, Guid sucursalId, bool esPrioritario = false)
+        public async Task<Ticket> GenerarTicketAsync(Guid servicioId, Guid sucursalId, Guid? clienteId = null)
         {
             var servicio = await _context.Servicios.FirstOrDefaultAsync(s => s.ServicioId == servicioId && s.Estado == "Activo" && !s.Eliminado);
             if (servicio == null)
@@ -34,32 +34,47 @@ namespace Proyecto.Services
             if (sucursal == null)
                 throw new Exception("No se encontró una sucursal válida para generar el ticket.");
 
-            // Find or create default "Invitado" Cliente
-            var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.DNI == "00000000" && !c.Eliminado);
+            // Resolve the client — use the provided account or fall back to the guest record
+            Cliente cliente = null;
+            if (clienteId.HasValue)
+                cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.ClienteId == clienteId.Value && !c.Eliminado);
+
             if (cliente == null)
             {
-                cliente = new Cliente
+                cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.DNI == "00000000" && !c.Eliminado);
+                if (cliente == null)
                 {
-                    ClienteId = Guid.NewGuid(),
-                    DNI = "00000000",
-                    Nombre_Cliente = "Invitado",
-                    Apellido_Cliente = "Invitado",
-                    Estado = "Activo"
-                };
-                _context.Clientes.Add(cliente);
+                    cliente = new Cliente
+                    {
+                        ClienteId        = Guid.NewGuid(),
+                        DNI              = "00000000",
+                        Nombre_Cliente   = "Invitado",
+                        Apellido_Cliente = "Invitado",
+                        Estado           = "Activo",
+                        TipoCliente      = "Normal"
+                    };
+                    _context.Clientes.Add(cliente);
+                }
             }
 
-            // Determine Priority
-            var prioridadName = esPrioritario ? "Prioridad" : "Normal";
-            var prioridad = await _context.Prioridades.FirstOrDefaultAsync(p => p.Nombre == prioridadName && !p.Eliminado);
+            // Resolve priority from the client's TipoCliente (Normal / Preferencial / VIP)
+            var tipoPrioridad = cliente.TipoCliente ?? "Normal";
+            var prioridad = await _context.Prioridades.FirstOrDefaultAsync(p => p.Nombre == tipoPrioridad && !p.Eliminado);
             if (prioridad == null)
             {
+                // Seed values may be missing — create a sensible default keyed to the name
+                var pesoMap = new Dictionary<string, int>
+                {
+                    { "Normal",       1 },
+                    { "Preferencial", 2 },
+                    { "VIP",          3 }
+                };
                 prioridad = new Prioridad
                 {
                     PrioridadId = Guid.NewGuid(),
-                    Nombre = prioridadName,
-                    Descripcion = "Prioridad automática",
-                    Peso = esPrioritario ? 10 : 1
+                    Nombre      = tipoPrioridad,
+                    Descripcion = tipoPrioridad,
+                    Peso        = pesoMap.TryGetValue(tipoPrioridad, out var p) ? p : 1
                 };
                 _context.Prioridades.Add(prioridad);
             }
@@ -76,13 +91,14 @@ namespace Proyecto.Services
             };
             _context.Colas.Add(cola);
 
-            // Calculate Ticket Number and Position
-            var today = DateTime.UtcNow.Date;
-            var ticketCountToday = await _context.Tickets
-                .CountAsync(t => t.ServicioId == servicioId && t.SucursalId == sucursalId && t.Hora_Emision >= today);
+            // Ticket number: global max for this prefix across all sucursales
+            // (unique index on Numero_Ticket is table-wide, not per sucursal)
+            var maxPosicion = await _context.Tickets
+                .Where(t => t.Numero_Ticket.StartsWith(servicio.Prefijo_Ticket))
+                .MaxAsync(t => (int?)t.Posicion) ?? 0;
 
-            int nuevaPosicion = ticketCountToday + 1;
-            string numeroTicket = $"{servicio.Prefijo_Ticket}{(nuevaPosicion).ToString("D3")}";
+            int nuevaPosicion = maxPosicion + 1;
+            string numeroTicket = $"{servicio.Prefijo_Ticket}{nuevaPosicion:D3}";
 
             var ticket = new Ticket
             {

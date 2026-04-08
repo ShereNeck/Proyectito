@@ -18,11 +18,16 @@ namespace Proyecto.Controllers
 			_context = context;
 		}
 
+		// ── LANDING / LOGIN ────────────────────────────────────────────
 
+		/// <summary>
+		/// Página principal: muestra la landing con los formularios de
+		/// login de Empleado y Cliente en el panel derecho.
+		/// </summary>
 		[HttpGet]
 		public IActionResult Login(string tab = "")
 		{
-
+			// Si ya está autenticado como empleado, redirigir al panel
 			if (User.Identity?.IsAuthenticated == true)
 			{
 				var rol = User.FindFirstValue(ClaimTypes.Role) ?? "";
@@ -31,6 +36,7 @@ namespace Proyecto.Controllers
 					: RedirectToAction("Index", "Agente");
 			}
 
+			// Si ya está autenticado como cliente, redirigir al kiosco
 			if (!string.IsNullOrWhiteSpace(HttpContext.Session.GetString("ClienteNombre")))
 				return RedirectToAction("Index", "Kiosco");
 
@@ -39,7 +45,11 @@ namespace Proyecto.Controllers
 			return View(new LoginEmpleadoVm());
 		}
 
+		// ── LOGIN EMPLEADO ─────────────────────────────────────────────
 
+		/// <summary>
+		/// Autentica a un empleado (Admin o Agente) mediante cookies.
+		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> LoginEmpleado(LoginEmpleadoVm model)
@@ -95,6 +105,7 @@ namespace Proyecto.Controllers
 
 			var usuario = await _context.Usuarios
 				.Include(u => u.Rol)
+				.Include(u => u.Cliente)
 				.FirstOrDefaultAsync(u =>
 					u.Nombre == model.Username &&
 					u.PasswordHash == model.Password &&
@@ -108,6 +119,13 @@ namespace Proyecto.Controllers
 
 			HttpContext.Session.SetString("ClienteNombre",    usuario.Nombre);
 			HttpContext.Session.SetString("ClienteUsuarioId", usuario.UsuarioId.ToString());
+
+			if (usuario.Cliente != null)
+			{
+				HttpContext.Session.SetString("ClienteId",           usuario.Cliente.ClienteId.ToString());
+				HttpContext.Session.SetString("ClienteNombreCompleto",
+					usuario.Cliente.Nombre_Cliente + " " + usuario.Cliente.Apellido_Cliente);
+			}
 
 			return RedirectToAction("Index", "Kiosco");
 		}
@@ -153,7 +171,8 @@ namespace Proyecto.Controllers
 				await _context.SaveChangesAsync();
 			}
 
-			var usuarioId = Guid.NewGuid();
+			var usuarioId  = Guid.NewGuid();
+			var clienteId  = Guid.NewGuid();
 
 			_context.Usuarios.Add(new Usuario
 			{
@@ -168,12 +187,14 @@ namespace Proyecto.Controllers
 
 			_context.Clientes.Add(new Cliente
 			{
-				ClienteId        = Guid.NewGuid(),
+				ClienteId        = clienteId,
 				DNI              = model.Dni,
 				Nombre_Cliente   = model.Nombre,
 				Apellido_Cliente = model.Apellido,
 				Fecha_Nacimiento = model.FechaNacimiento,
 				Estado           = "Activo",
+				TipoCliente      = "Normal",
+				UsuarioId        = usuarioId,
 				CreateBy         = Guid.Empty,
 				ModifiedBy       = Guid.Empty
 			});
@@ -183,6 +204,7 @@ namespace Proyecto.Controllers
 			HttpContext.Session.SetString("ClienteNombre",         model.Username);
 			HttpContext.Session.SetString("ClienteNombreCompleto", model.Nombre + " " + model.Apellido);
 			HttpContext.Session.SetString("ClienteUsuarioId",      usuarioId.ToString());
+			HttpContext.Session.SetString("ClienteId",             clienteId.ToString());
 
 			return RedirectToAction("Index", "Kiosco");
 		}
@@ -193,6 +215,7 @@ namespace Proyecto.Controllers
 			HttpContext.Session.Remove("ClienteNombre");
 			HttpContext.Session.Remove("ClienteNombreCompleto");
 			HttpContext.Session.Remove("ClienteUsuarioId");
+			HttpContext.Session.Remove("ClienteId");
 			return RedirectToAction("Login");
 		}
 

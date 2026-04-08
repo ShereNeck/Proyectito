@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Proyecto.Controllers
 {
-    [Authorize(Roles = "Agente Bancario")]
+    [Authorize(Roles = "Agente")]
     public class AgenteController : Controller
     {
         private readonly ProyectoDBContext _context;
@@ -85,11 +85,13 @@ namespace Proyecto.Controllers
             ViewBag.VentanillaName = asignacion.Ventanilla.Numero_Ventanilla;
             ViewBag.VentanillaId = asignacion.VentanillaId;
 
+            // Fetch current ticket
             var currentTicket = await _ticketService.ObtenerTicketActualPorVentanillaAsync(asignacion.VentanillaId);
             ViewBag.CurrentTicket = currentTicket;
 
+            // Fetch pending queue
             var serviciosAsignados = await _context.VentanillaServicios
-                .Where(vs => vs.VentanillaId == asignacion.VentanillaId && vs.Activo)
+                .Where(vs => vs.VentanillaId == asignacion.VentanillaId && vs.Activo && !vs.Eliminado)
                 .Select(vs => vs.ServicioId).ToListAsync();
 
             var pendingQueue = await _context.Tickets
@@ -156,9 +158,59 @@ namespace Proyecto.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> PromoverTicket(Guid ticketId)
+        {
+            try
+            {
+                var ticket = await _context.Tickets
+                    .Include(t => t.Cola)
+                    .FirstOrDefaultAsync(t => t.TicketId == ticketId && !t.Eliminado);
+
+                if (ticket == null) return NotFound();
+
+                var preferencial = await _context.Prioridades
+                    .FirstOrDefaultAsync(p => p.Nombre == "Preferencial" && !p.Eliminado);
+
+                if (preferencial == null)
+                {
+                    TempData["Error"] = "No se encontró la prioridad Preferencial en el sistema.";
+                    return RedirectToAction("Index");
+                }
+
+                ticket.Cola.PrioridadId = preferencial.PrioridadId;
+                await _context.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("ReceiveQueueUpdate");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
         public async Task<IActionResult> LlamarDeNuevo(Guid ticketId)
         {
             await _hubContext.Clients.All.SendAsync("ReceiveQueueUpdate");
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> FinalizarYSiguiente(Guid ticketId, Guid ventanillaId)
+        {
+            try
+            {
+                await _agentService.FinalizarTicketAsync(ticketId);
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var empleado = await _context.Empleados.FirstOrDefaultAsync(e => e.UsuarioId == Guid.Parse(userIdStr));
+                if (empleado != null)
+                    await _agentService.LlamarSiguienteAsync(ventanillaId, empleado.EmpleadoId);
+                await _hubContext.Clients.All.SendAsync("ReceiveQueueUpdate");
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
             return RedirectToAction("Index");
         }
     }

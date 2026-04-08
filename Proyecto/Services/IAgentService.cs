@@ -28,7 +28,7 @@ namespace Proyecto.Services
             // 1. Validar ventanilla activa
             var ventanilla = await _context.Ventanillas
                 .Include(v => v.VentanillaServicios)
-                .FirstOrDefaultAsync(v => v.VentanillaId == ventanillaId && v.Estado_Ventanilla == "Activa" && !v.Eliminado);
+                .FirstOrDefaultAsync(v => v.VentanillaId == ventanillaId && v.Estado_Ventanilla == "Abierta" && !v.Eliminado);
 
             if (ventanilla == null)
                 throw new Exception("La ventanilla no existe o está cerrada.");

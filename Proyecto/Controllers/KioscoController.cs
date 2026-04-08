@@ -43,7 +43,7 @@ namespace Proyecto.Controllers
 
         // P2: Generar ticket (directo, sin pedir DNI)
         [HttpPost]
-        public async Task<IActionResult> GenerarTicket(Guid servicioId, bool esPrioritario = false)
+        public async Task<IActionResult> GenerarTicket(Guid servicioId)
         {
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("ClienteNombre")))
                 return RedirectToAction("Login", "Cliente");
@@ -51,11 +51,23 @@ namespace Proyecto.Controllers
             try
             {
                 var sucursal = await _context.Sucursales
-                    .FirstOrDefaultAsync(s => !s.Eliminado);
+                    .Where(s => !s.Eliminado && s.Ventanillas.Any(v =>
+                        !v.Eliminado &&
+                        v.VentanillaServicios.Any(vs => vs.ServicioId == servicioId && vs.Activo && !vs.Eliminado)))
+                    .FirstOrDefaultAsync();
+
+                if (sucursal == null)
+                    sucursal = await _context.Sucursales.FirstOrDefaultAsync(s => !s.Eliminado);
+
                 if (sucursal == null)
                     return RedirectToAction("Index");
 
-                var ticket = await _ticketService.GenerarTicketAsync(servicioId, sucursal.SucursalId, esPrioritario);
+                Guid? clienteId = null;
+                var clienteIdStr = HttpContext.Session.GetString("ClienteId");
+                if (Guid.TryParse(clienteIdStr, out var parsedClienteId))
+                    clienteId = parsedClienteId;
+
+                var ticket = await _ticketService.GenerarTicketAsync(servicioId, sucursal.SucursalId, clienteId);
 
                 var personasAntes = await _context.Tickets
                     .CountAsync(t => t.ServicioId  == servicioId
@@ -75,7 +87,10 @@ namespace Proyecto.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                var inner = ex.InnerException?.InnerException?.Message
+                         ?? ex.InnerException?.Message
+                         ?? ex.Message;
+                TempData["Error"] = inner;
                 return RedirectToAction("Index");
             }
         }
