@@ -157,6 +157,14 @@ namespace Proyecto.Data.EntityConfig
             builder.Property(x => x.Apellido_Cliente).IsRequired().HasMaxLength(150);
             builder.Property(x => x.Fecha_Nacimiento).IsRequired(false);
             builder.Property(x => x.Estado).IsRequired().HasMaxLength(20).HasDefaultValue("Activo");
+            builder.Property(x => x.TipoCliente).IsRequired().HasMaxLength(20).HasDefaultValue("Normal");
+            builder.Property(x => x.UsuarioId).IsRequired(false);
+
+            builder.HasOne(x => x.Usuario)
+                   .WithOne(x => x.Cliente)
+                   .HasForeignKey<Cliente>(x => x.UsuarioId)
+                   .IsRequired(false)
+                   .OnDelete(DeleteBehavior.SetNull);
         }
     }
 

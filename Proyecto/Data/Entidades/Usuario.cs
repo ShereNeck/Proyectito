@@ -10,6 +10,7 @@ namespace Proyecto.Data.Entidades
 
         public Rol Rol { get; set; }
         public Empleado Empleado { get; set; }
+        public Cliente Cliente { get; set; }
 
         public void EliminarLogico(Guid userId) { Eliminado = true; ModifiedBy = userId; }
     }

@@ -8,9 +8,6 @@ using Proyecto.Data.Entidades;
 
 namespace Proyecto.Services
 {
-
-    //
-
     public interface ITicketService
     {
         Task<Ticket> GenerarTicketAsync(Guid servicioId, Guid sucursalId, Guid? clienteId = null);
@@ -49,12 +46,12 @@ namespace Proyecto.Services
                 {
                     cliente = new Cliente
                     {
-                        ClienteId = Guid.NewGuid(),
-                        DNI = "00000000",
-                        Nombre_Cliente = "Invitado",
+                        ClienteId        = Guid.NewGuid(),
+                        DNI              = "00000000",
+                        Nombre_Cliente   = "Invitado",
                         Apellido_Cliente = "Invitado",
-                        Estado = "Activo",
-                        TipoCliente = "Normal"
+                        Estado           = "Activo",
+                        TipoCliente      = "Normal"
                     };
                     _context.Clientes.Add(cliente);
                 }
@@ -75,9 +72,9 @@ namespace Proyecto.Services
                 prioridad = new Prioridad
                 {
                     PrioridadId = Guid.NewGuid(),
-                    Nombre = tipoPrioridad,
+                    Nombre      = tipoPrioridad,
                     Descripcion = tipoPrioridad,
-                    Peso = pesoMap.TryGetValue(tipoPrioridad, out var p) ? p : 1
+                    Peso        = pesoMap.TryGetValue(tipoPrioridad, out var p) ? p : 1
                 };
                 _context.Prioridades.Add(prioridad);
             }

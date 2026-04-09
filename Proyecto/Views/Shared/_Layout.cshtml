@@ -21,7 +21,7 @@
                 @if (User.Identity.IsAuthenticated)
                 {
                     <div class="nav-avatar">@User.Identity.Name?.Substring(0, 2).ToUpper()</div>
-                    <span>@User.Identity.Name</span>
+                    <span>@User.Identity.Name@(ViewBag.VentanillaName != null ? " — Ventanilla " + ViewBag.VentanillaName : "")</span>
                     <a href="/Login/Logout" class="btn-logout">Cerrar sesión</a>
                 }
                 else

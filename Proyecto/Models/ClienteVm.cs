@@ -27,5 +27,8 @@ namespace Proyecto.Models
 
         [Display(Name = "Estado")]
         public string Estado { get; set; } = "Activo";
+
+        [Display(Name = "Tipo de cliente")]
+        public string TipoCliente { get; set; } = "Normal";
     }
 }

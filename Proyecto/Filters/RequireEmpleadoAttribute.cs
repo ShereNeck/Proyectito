@@ -4,7 +4,11 @@ using System.Security.Claims;
 
 namespace Proyecto.Filters
 {
-
+	/// <summary>
+	/// Protege rutas que solo pueden acceder empleados (Admin / Agente).
+	/// Verifica que el usuario tenga cookie de autenticación activa.
+	/// Uso: [RequireEmpleado] o [RequireEmpleado("Administrador")]
+	/// </summary>
 	public class RequireEmpleadoAttribute : TypeFilterAttribute
 	{
 		public RequireEmpleadoAttribute(string? rol = null)
