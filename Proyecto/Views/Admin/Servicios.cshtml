@@ -50,14 +50,14 @@
 <div id="modalCreate" class="modal-overlay d-none">
     <div class="modal-box">
         <h4>+ Nuevo Servicio</h4>
-        <form method="post" asp-action="Crear" asp-controller="Servicios">
+        <form method="post" asp-action="Crear" asp-controller="Servicios" id="formCrear">
             <div class="modal-form-group">
                 <label>Nombre del Servicio</label>
-                <input type="text" name="Nombre" placeholder="Ej: Caja" required />
+                <input type="text" name="Nombre" placeholder="Ej: Caja" />
             </div>
             <div class="modal-form-group">
                 <label>Prefijo del Ticket</label>
-                <input type="text" name="Prefijo" placeholder="Ej: C" maxlength="5" required />
+                <input type="text" name="Prefijo" placeholder="Ej: C" maxlength="5" />
             </div>
             <div class="modal-form-group">
                 <label>Descripción</label>
@@ -70,6 +70,7 @@
             <div class="modal-form-group">
                 <label>Estado</label>
                 <select name="Estado">
+                    <option value="">-- Seleccionar --</option>
                     <option value="Activo">Activo</option>
                     <option value="Inactivo">Inactivo</option>
                 </select>
@@ -86,15 +87,15 @@
 <div id="modalEdit" class="modal-overlay d-none">
     <div class="modal-box">
         <h4>✏️ Editar Servicio</h4>
-        <form method="post" asp-action="Editar" asp-controller="Servicios">
+        <form method="post" asp-action="Editar" asp-controller="Servicios" id="formEditar">
             <input type="hidden" id="editId" name="ServicioId" />
             <div class="modal-form-group">
                 <label>Nombre del Servicio</label>
-                <input type="text" id="editNombre" name="Nombre" required />
+                <input type="text" id="editNombre" name="Nombre" />
             </div>
             <div class="modal-form-group">
                 <label>Prefijo del Ticket</label>
-                <input type="text" id="editPrefijo" name="Prefijo" maxlength="5" required />
+                <input type="text" id="editPrefijo" name="Prefijo" maxlength="5" />
             </div>
             <div class="modal-form-group">
                 <label>Descripción</label>
@@ -107,6 +108,7 @@
             <div class="modal-form-group">
                 <label>Estado</label>
                 <select id="editEstado" name="Estado">
+                    <option value="">-- Seleccionar --</option>
                     <option value="Activo">Activo</option>
                     <option value="Inactivo">Inactivo</option>
                 </select>
@@ -279,5 +281,49 @@ document.querySelectorAll('.modal-overlay').forEach(function(m) {
 
 // Carga inicial
 document.addEventListener('DOMContentLoaded', buscar);
+
+// ── Validaciones nativas ──────────────────────────────────────────
+function validarForm(formId) {
+    var form    = document.getElementById(formId);
+    var nombre  = form.querySelector('[name="Nombre"]');
+    var prefijo = form.querySelector('[name="Prefijo"]');
+    var estado  = form.querySelector('[name="Estado"]');
+
+    nombre.setCustomValidity('');
+    prefijo.setCustomValidity('');
+    estado.setCustomValidity('');
+
+    if (!nombre.value.trim()) {
+        nombre.setCustomValidity('El nombre del servicio es obligatorio.');
+        nombre.reportValidity();
+        return false;
+    }
+    if (!prefijo.value.trim()) {
+        prefijo.setCustomValidity('El prefijo del ticket es obligatorio.');
+        prefijo.reportValidity();
+        return false;
+    }
+    if (!estado.value) {
+        estado.setCustomValidity('Debe seleccionar un Estado.');
+        estado.reportValidity();
+        return false;
+    }
+    return true;
+}
+
+// Limpiar mensajes al escribir/cambiar
+document.querySelectorAll('[name="Nombre"], [name="Prefijo"]').forEach(function(el) {
+    el.addEventListener('input', function() { this.setCustomValidity(''); });
+});
+document.querySelectorAll('[name="Estado"]').forEach(function(el) {
+    el.addEventListener('change', function() { this.setCustomValidity(''); });
+});
+
+document.getElementById('formCrear').addEventListener('submit', function(e) {
+    if (!validarForm('formCrear')) e.preventDefault();
+});
+document.getElementById('formEditar').addEventListener('submit', function(e) {
+    if (!validarForm('formEditar')) e.preventDefault();
+});
 </script>
 }
