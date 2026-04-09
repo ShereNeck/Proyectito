@@ -1,77 +1,96 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Proyecto.Data;
-using Proyecto.Filters;
+using Proyecto.Data.Entidades;
 using Proyecto.Models;
 
 namespace Proyecto.Controllers
 {
-	public class ClienteController : Controller
-	{
-		private readonly ProyectoDBContext _context;
+    public class ClienteController : Controller
+    {
+        private readonly ProyectoDBContext _context;
+        public ClienteController(ProyectoDBContext context)
+        {
+            _context = context;
+        }
 
-		public ClienteController(ProyectoDBContext context)
-		{
-			_context = context;
-		}
+        // GET: redirige al login de Account
+        [HttpGet]
+        public IActionResult Login(string tab = "cliente")
+        {
+            if (!string.IsNullOrWhiteSpace(HttpContext.Session.GetString("ClienteNombre")))
+                return RedirectToAction("Index", "Kiosco");
+            return RedirectToAction("Login", "Account", new { tab });
+        }
 
+        // POST: Solo valida DNI
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DoLogin(string dni)
+        {
+            if (string.IsNullOrWhiteSpace(dni) || dni.Length != 13)
+            {
+                TempData["LoginError"] = "Ingrese un DNI válido de 13 dígitos.";
+                return RedirectToAction("Login", "Account", new { tab = "cliente" });
+            }
 
-		[HttpGet]
-		public IActionResult Login(string tab = "cliente")
-		{
-			if (!string.IsNullOrWhiteSpace(HttpContext.Session.GetString("ClienteNombre")))
-				return RedirectToAction("Index", "Kiosco");
+            var cliente = await _context.Clientes
+                .FirstOrDefaultAsync(c => c.DNI == dni && !c.Eliminado);
 
-			return RedirectToAction("Login", "Account", new { tab });
-		}
+            if (cliente == null)
+            {
+                // DNI no registrado, redirige a registro rápido
+                TempData["DNIPendiente"] = dni;
+                return RedirectToAction("Login", "Account", new { tab = "registro" });
+            }
 
+            // Sesión mínima
+            HttpContext.Session.SetString("ClienteNombre", cliente.Nombre_Cliente);
+            HttpContext.Session.SetString("ClienteId", cliente.ClienteId.ToString());
+            return RedirectToAction("Index", "Kiosco");
+        }
 
+        // POST: Registro rápido — solo DNI, Nombre, Apellido
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegistroRapido(string dni, string nombre, string apellido)
+        {
+            if (string.IsNullOrWhiteSpace(dni) || string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido))
+            {
+                TempData["RegisterError"] = "Todos los campos son obligatorios.";
+                return RedirectToAction("Login", "Account", new { tab = "registro" });
+            }
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> DoLogin(LoginClienteVm model)
-		{
-			if (!ModelState.IsValid)
-			{
-				TempData["LoginError"] = "Datos inválidos.";
-				return RedirectToAction("Login", "Account", new { tab = "cliente" });
-			}
+            // Verificar que el DNI no exista ya
+            var existe = await _context.Clientes.AnyAsync(c => c.DNI == dni && !c.Eliminado);
+            if (existe)
+            {
+                TempData["LoginError"] = "Este DNI ya está registrado. Ingrese su DNI nuevamente.";
+                return RedirectToAction("Login", "Account", new { tab = "cliente" });
+            }
 
-			var usuario = await _context.Usuarios
-				.Include(u => u.Rol)
-				.FirstOrDefaultAsync(u =>
-					u.Nombre == model.Username &&
-					u.PasswordHash == model.Password &&
-					!u.Eliminado);
+            var cliente = new Cliente
+            {
+                ClienteId = Guid.NewGuid(),
+                DNI = dni,
+                Nombre_Cliente = nombre,
+                Apellido_Cliente = apellido,
+                Estado = "Activo"
+            };
 
-			if (usuario == null || usuario.Rol?.Nombre != "Cliente")
-			{
-				TempData["LoginError"] = "Usuario o contraseña incorrectos.";
-				return RedirectToAction("Login", "Account", new { tab = "cliente" });
-			}
+            _context.Clientes.Add(cliente);
+            await _context.SaveChangesAsync();
 
-			HttpContext.Session.SetString("ClienteNombre",    usuario.Nombre);
-			HttpContext.Session.SetString("ClienteUsuarioId", usuario.UsuarioId.ToString());
-			return RedirectToAction("Index", "Kiosco");
-		}
+            HttpContext.Session.SetString("ClienteNombre", cliente.Nombre_Cliente);
+            HttpContext.Session.SetString("ClienteId", cliente.ClienteId.ToString());
+            return RedirectToAction("Index", "Kiosco");
+        }
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Registrar(RegistroClienteVm model)
-			=> await RedirectToAccountRegistrar(model);
-
-		public IActionResult Logout()
-		{
-			HttpContext.Session.Remove("ClienteNombre");
-			HttpContext.Session.Remove("ClienteNombreCompleto");
-			HttpContext.Session.Remove("ClienteUsuarioId");
-			return RedirectToAction("Login", "Account");
-		}
-
-		private async Task<IActionResult> RedirectToAccountRegistrar(RegistroClienteVm model)
-		{
-			TempData["RegisterError"] = "Por favor usa el formulario principal.";
-			return RedirectToAction("Login", "Account", new { tab = "registro" });
-		}
-	}
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Remove("ClienteNombre");
+            HttpContext.Session.Remove("ClienteId");
+            return RedirectToAction("Login", "Account");
+        }
+    }
 }
