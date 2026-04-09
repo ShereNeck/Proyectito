@@ -12,6 +12,7 @@ namespace Proyecto.Controllers
         public IActionResult Servicios()  => RedirectToAction("Index", "Servicios");
         public IActionResult Sucursales() => RedirectToAction("Index", "Sucursales");
         public IActionResult Empleados()  => RedirectToAction("Index", "Empleados");
+        public IActionResult Clientes()   => RedirectToAction("Index", "Clientes");
         public IActionResult Roles()      => RedirectToAction("Index", "Roles");
         public IActionResult Reportes()   => RedirectToAction("Index", "Reportes");
     }

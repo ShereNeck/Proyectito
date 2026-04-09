@@ -44,8 +44,8 @@ namespace Proyecto.Controllers
                 return RedirectToAction("Login", "Account", new { tab = "registro" });
             }
 
-            // Sesión mínima
             HttpContext.Session.SetString("ClienteNombre", cliente.Nombre_Cliente);
+            HttpContext.Session.SetString("ClienteNombreCompleto", cliente.Nombre_Cliente + " " + cliente.Apellido_Cliente);
             HttpContext.Session.SetString("ClienteId", cliente.ClienteId.ToString());
             return RedirectToAction("Index", "Kiosco");
         }
@@ -75,13 +75,15 @@ namespace Proyecto.Controllers
                 DNI = dni,
                 Nombre_Cliente = nombre,
                 Apellido_Cliente = apellido,
-                Estado = "Activo"
+                Estado = "Activo",
+                TipoCliente = "Normal"
             };
 
             _context.Clientes.Add(cliente);
             await _context.SaveChangesAsync();
 
             HttpContext.Session.SetString("ClienteNombre", cliente.Nombre_Cliente);
+            HttpContext.Session.SetString("ClienteNombreCompleto", cliente.Nombre_Cliente + " " + cliente.Apellido_Cliente);
             HttpContext.Session.SetString("ClienteId", cliente.ClienteId.ToString());
             return RedirectToAction("Index", "Kiosco");
         }

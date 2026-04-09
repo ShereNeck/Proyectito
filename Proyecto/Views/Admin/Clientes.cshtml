@@ -1,0 +1,235 @@
+@using Proyecto.Data.Entidades
+@model IEnumerable<Cliente>
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="admin-body">
+    <div class="sidebar">
+        <a href="/Admin/Ventanillas" class="sidebar-item"><span class="icon">🪟</span> Ventanillas</a>
+        <a href="/Admin/Servicios"   class="sidebar-item"><span class="icon">🏷️</span> Servicios</a>
+        <a href="/Admin/Sucursales"  class="sidebar-item"><span class="icon">📍</span> Sucursales</a>
+        <a href="/Admin/Empleados"   class="sidebar-item"><span class="icon">👤</span> Empleados</a>
+        <a href="/Admin/Clientes"    class="sidebar-item active"><span class="icon">👥</span> Clientes</a>
+        <a href="/Admin/Roles"       class="sidebar-item"><span class="icon">🔐</span> Roles</a>
+        <a href="/Admin/Reportes"    class="sidebar-item"><span class="icon">📈</span> Reportes</a>
+    </div>
+
+    <div class="admin-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert-success">✅ @TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert-error">⚠️ @TempData["Error"]</div>
+        }
+
+        <div class="admin-top">
+            <h3>Gestión de Clientes</h3>
+        </div>
+
+        <!-- Barra de filtros -->
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="filtroTexto" placeholder="🔍 Buscar por nombre, apellido o DNI..."
+                   oninput="debouncedBuscar()"
+                   style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;" />
+            <select id="filtroTipo" onchange="buscar()"
+                    style="padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;background:white;">
+                <option value="">Todos los tipos</option>
+                <option value="Normal">Normal</option>
+                <option value="Preferencial">Preferencial</option>
+                <option value="VIP">VIP</option>
+            </select>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>DNI</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+
+        <!-- Paginación -->
+        <div id="paginacion" style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:14px;flex-wrap:wrap;"></div>
+    </div>
+</div>
+
+<!-- ===================== MODAL EDITAR TIPO ===================== -->
+<div id="modalEdit" class="modal-overlay d-none">
+    <div class="modal-box" style="max-width:380px;">
+        <h4>✏️ Cambiar tipo de cliente</h4>
+        <form method="post" asp-action="EditarTipo" asp-controller="Clientes">
+            <input type="hidden" id="editId" name="ClienteId" />
+            <p id="editNombreLabel" style="color:#6B7A99;font-size:13px;margin-bottom:16px;"></p>
+            <div class="modal-form-group">
+                <label>Tipo de cliente</label>
+                <select id="editTipo" name="TipoCliente" required>
+                    <option value="Normal">Normal</option>
+                    <option value="Preferencial">Preferencial</option>
+                    <option value="VIP">VIP</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalEdit')">Cancelar</button>
+                <button type="submit" class="btn-save">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===================== MODAL ELIMINAR ===================== -->
+<div id="modalDelete" class="modal-overlay d-none">
+    <div class="modal-box" style="max-width:380px;text-align:center;">
+        <h4>🗑️ Eliminar Cliente</h4>
+        <p style="color:#6B7A99;font-size:13px;margin-bottom:16px;">¿Seguro que deseas eliminar a <b id="deleteNombre"></b>?<br><small>Esta acción no puede deshacerse.</small></p>
+        <form method="post" asp-action="Eliminar" asp-controller="Clientes">
+            <input type="hidden" id="deleteId" name="ClienteId" />
+            <div class="modal-footer" style="justify-content:center;">
+                <button type="button" class="btn-cancel" onclick="closeModal('modalDelete')">Cancelar</button>
+                <button type="submit" class="btn-del-confirm">Sí, eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var PAGE_SIZE     = 10;
+        var paginaActual  = 1;
+        var todosLosDatos = [];
+        var _cache        = {};
+        var _debTimer     = null;
+
+        function h(s) {
+            return (s == null ? '' : String(s))
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        // ── Pill de tipo ─────────────────────────────────────────────────
+        function tipoPill(tipo) {
+            if (tipo === 'VIP')
+                return '<span style="background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">VIP</span>';
+            if (tipo === 'Preferencial')
+                return '<span style="background:#EDE9FE;color:#5B21B6;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">Preferencial</span>';
+            return '<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">Normal</span>';
+        }
+
+        // ── Llamada AJAX ─────────────────────────────────────────────────
+        function buscar() {
+            var vm = {
+                Busqueda:    document.getElementById('filtroTexto').value,
+                TipoCliente: document.getElementById('filtroTipo').value || null
+            };
+            fetch('/Admin/Clientes/Buscar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(vm)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                todosLosDatos = data;
+                paginaActual  = 1;
+                renderTabla();
+            });
+        }
+
+        function debouncedBuscar() {
+            clearTimeout(_debTimer);
+            _debTimer = setTimeout(buscar, 300);
+        }
+
+        // ── Construir fila ───────────────────────────────────────────────
+        function buildRow(item, num) {
+            _cache[item.clienteId] = item;
+            var estadoBadge = item.estado === 'Activo'
+                ? '<span class="pill-active2">Activo</span>'
+                : '<span class="pill-inactive">' + h(item.estado) + '</span>';
+            return '<tr>' +
+                '<td>' + num + '</td>' +
+                '<td><span style="font-family:\'DM Mono\',monospace;font-size:12px;">' + h(item.dni) + '</span></td>' +
+                '<td><b>' + h(item.nombre) + '</b></td>' +
+                '<td>' + h(item.apellido) + '</td>' +
+                '<td>' + tipoPill(item.tipoCliente) + '</td>' +
+                '<td>' + estadoBadge + '</td>' +
+                '<td><div class="tbl-actions">' +
+                    '<button class="tbl-btn tbl-edit" onclick="openEditById(\'' + item.clienteId + '\')">Cambiar tipo</button>' +
+                    '<button class="tbl-btn tbl-del"  onclick="openDeleteById(\'' + item.clienteId + '\')">Eliminar</button>' +
+                '</div></td>' +
+                '</tr>';
+        }
+
+        // ── Renderizar con paginación ────────────────────────────────────
+        function renderTabla() {
+            var tbody  = document.getElementById('tbody');
+            _cache = {};
+            var inicio = (paginaActual - 1) * PAGE_SIZE;
+            var pagina = todosLosDatos.slice(inicio, inicio + PAGE_SIZE);
+            if (todosLosDatos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#6B7A99;padding:20px;">No se encontraron resultados.</td></tr>';
+            } else {
+                tbody.innerHTML = pagina.map(function(item, idx) {
+                    return buildRow(item, inicio + idx + 1);
+                }).join('');
+            }
+            renderPaginacion();
+        }
+
+        function renderPaginacion() {
+            var total    = todosLosDatos.length;
+            var totalPag = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            var pag  = document.getElementById('paginacion');
+            var html = '<span style="font-size:12px;color:#6B7A99;margin-right:6px;">' + total + ' resultado(s)</span>';
+            if (totalPag > 1) {
+                var s = 'padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid ';
+                html += '<button onclick="irPagina(' + (paginaActual-1) + ')" ' + (paginaActual===1?'disabled':'') + ' style="' + s + '#E5E7EB;background:white;">‹</button>';
+                for (var p = 1; p <= totalPag; p++) {
+                    html += '<button onclick="irPagina(' + p + ')" style="' + s +
+                        (p===paginaActual ? '#1A56DB;background:#1A56DB;color:white;font-weight:600' : '#E5E7EB;background:white;color:#374151') + ';">' + p + '</button>';
+                }
+                html += '<button onclick="irPagina(' + (paginaActual+1) + ')" ' + (paginaActual===totalPag?'disabled':'') + ' style="' + s + '#E5E7EB;background:white;">›</button>';
+            }
+            pag.innerHTML = html;
+        }
+
+        function irPagina(p) {
+            var totalPag = Math.ceil(todosLosDatos.length / PAGE_SIZE);
+            if (p < 1 || p > totalPag) return;
+            paginaActual = p; renderTabla();
+        }
+
+        // ── Abrir modales desde cache ────────────────────────────────────
+        function openEditById(id) {
+            var d = _cache[id];
+            document.getElementById('editId').value        = d.clienteId;
+            document.getElementById('editTipo').value      = d.tipoCliente;
+            document.getElementById('editNombreLabel').textContent = d.nombre + ' ' + d.apellido + ' — ' + d.dni;
+            openModal('modalEdit');
+        }
+        function openDeleteById(id) {
+            var d = _cache[id];
+            document.getElementById('deleteId').value = d.clienteId;
+            document.getElementById('deleteNombre').textContent = d.nombre + ' ' + d.apellido;
+            openModal('modalDelete');
+        }
+
+        // ── Modales ──────────────────────────────────────────────────────
+        function openModal(id)  { document.getElementById(id).classList.remove('d-none'); }
+        function closeModal(id) { document.getElementById(id).classList.add('d-none'); }
+
+        document.querySelectorAll('.modal-overlay').forEach(function(m) {
+            m.addEventListener('click', function(e) { if (e.target === m) m.classList.add('d-none'); });
+        });
+
+        document.addEventListener('DOMContentLoaded', buscar);
+    </script>
+}

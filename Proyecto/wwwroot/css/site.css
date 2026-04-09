@@ -339,11 +339,30 @@ body {
     font-family: 'DM Sans', sans-serif;
     text-decoration: none;
     text-align: center;
+    height: 44px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+.btn:disabled { opacity: 0.45; cursor: default; }
 .btn-primary { background: var(--blue); color: white; }
 .btn-success { background: var(--green); color: white; }
 .btn-danger { background: var(--red); color: white; }
 .btn-outline { background: white; color: var(--navy); border: 1.5px solid var(--border); }
+.btn-siguiente { background: white; border: 1.5px solid var(--blue); color: var(--blue); font-weight: 700; }
+.btn-promover {
+    background: #7C3AED;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+}
+.pill-pref { background: #EDE9FE; color: #5B21B6; }
 .queue-list { display: flex; flex-direction: column; gap: 8px; }
 .queue-row {
     display: flex;

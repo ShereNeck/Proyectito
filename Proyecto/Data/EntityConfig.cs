@@ -159,6 +159,7 @@ namespace Proyecto.Data.EntityConfig
             builder.Property(x => x.Estado).IsRequired().HasMaxLength(20).HasDefaultValue("Activo");
             builder.Property(x => x.TipoCliente).IsRequired().HasMaxLength(20).HasDefaultValue("Normal");
             builder.Property(x => x.UsuarioId).IsRequired(false);
+            builder.HasIndex(x => x.UsuarioId).IsUnique().HasFilter("[UsuarioId] IS NOT NULL");
 
             builder.HasOne(x => x.Usuario)
                    .WithOne(x => x.Cliente)
