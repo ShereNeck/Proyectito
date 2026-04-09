@@ -27,13 +27,16 @@ namespace Proyecto.Controllers
 		[HttpGet]
 		public IActionResult Login(string tab = "")
 		{
-			// Si ya está autenticado como empleado, redirigir al panel
+			// Si ya está autenticado como empleado, redirigir al panel correspondiente
 			if (User.Identity?.IsAuthenticated == true)
 			{
 				var rol = User.FindFirstValue(ClaimTypes.Role) ?? "";
-				return rol == "Administrador"
-					? RedirectToAction("Index", "Admin")
-					: RedirectToAction("Index", "Agente");
+				if (rol == "Administrador")
+					return RedirectToAction("Index", "Admin");
+				if (rol == "Agente" || rol == "Agente Bancario")
+					return RedirectToAction("Index", "Agente");
+				// Rol desconocido: cerrar sesión para evitar loops
+				return RedirectToAction("Logout");
 			}
 
 			// Si ya está autenticado como cliente, redirigir al kiosco
