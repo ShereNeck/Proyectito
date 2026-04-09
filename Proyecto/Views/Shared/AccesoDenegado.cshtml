@@ -217,6 +217,24 @@
         }
         .btn-ghost:hover { background: var(--surface); color: var(--text); }
 
+        .btn-logout {
+            background: var(--white);
+            color: var(--red);
+            border: 1px solid var(--red-border);
+        }
+        .btn-logout:hover { background: var(--red-light); opacity: 1; }
+
+        .nav-logout {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--blue);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        .nav-logout:hover { background: var(--surface); color: var(--navy); }
+
         /* ── FOOTER ── */
         .footer {
             background: var(--navy-mid);
@@ -266,6 +284,7 @@
                     @(User.Identity.Name?.Length > 0 ? User.Identity.Name.Substring(0, 2).ToUpper() : "?")
                 </div>
                 <span>@User.Identity.Name</span>
+                <a class="nav-logout" href="@Url.Action("Logout", "Account")" title="Cierra sesión para iniciar con otro usuario">Cerrar sesión</a>
             </div>
         }
     </nav>
@@ -316,6 +335,7 @@
                     Volver a la página anterior
                 </a>
                 <a href="/" class="btn btn-ghost">Ir al inicio</a>
+                <a href="@Url.Action("Logout", "Account")" class="btn btn-logout">Cerrar sesión e iniciar con otra cuenta</a>
             </div>
 
         </div>
