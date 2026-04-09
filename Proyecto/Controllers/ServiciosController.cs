@@ -42,6 +42,22 @@ namespace Proyecto.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            var nombreDup = await _context.Servicios
+                .AnyAsync(s => !s.Eliminado && s.Nombre_Servicio == vm.Nombre);
+            if (nombreDup)
+            {
+                TempData["Error"] = $"Ya existe un servicio con el nombre '{vm.Nombre}'.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var prefijoDup = await _context.Servicios
+                .AnyAsync(s => !s.Eliminado && s.Prefijo_Ticket == vm.Prefijo);
+            if (prefijoDup)
+            {
+                TempData["Error"] = $"Ya existe un servicio con el prefijo '{vm.Prefijo}'.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var servicio = Servicio.Crear(vm.Nombre, vm.Prefijo, vm.Descripcion,
                                           vm.TiempoEstimado, vm.Estado, UsuarioActualId());
             _context.Servicios.Add(servicio);
@@ -62,6 +78,22 @@ namespace Proyecto.Controllers
 
             var servicio = await _context.Servicios.FindAsync(vm.ServicioId);
             if (servicio == null) return NotFound();
+
+            var nombreDup = await _context.Servicios
+                .AnyAsync(s => !s.Eliminado && s.Nombre_Servicio == vm.Nombre && s.ServicioId != vm.ServicioId);
+            if (nombreDup)
+            {
+                TempData["Error"] = $"Ya existe un servicio con el nombre '{vm.Nombre}'.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var prefijoDup = await _context.Servicios
+                .AnyAsync(s => !s.Eliminado && s.Prefijo_Ticket == vm.Prefijo && s.ServicioId != vm.ServicioId);
+            if (prefijoDup)
+            {
+                TempData["Error"] = $"Ya existe un servicio con el prefijo '{vm.Prefijo}'.";
+                return RedirectToAction(nameof(Index));
+            }
 
             servicio.Actualizar(vm.Nombre, vm.Prefijo, vm.Descripcion,
                                 vm.TiempoEstimado, vm.Estado, UsuarioActualId());

@@ -54,7 +54,16 @@ namespace Proyecto.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var userId     = UsuarioActualId();
+            var userId = UsuarioActualId();
+
+            var duplicado = await _context.Ventanillas
+                .AnyAsync(v => !v.Eliminado && v.Numero_Ventanilla == vm.Numero);
+            if (duplicado)
+            {
+                TempData["Error"] = $"Ya existe una ventanilla con el número '{vm.Numero}'.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var ventanilla = Ventanilla.Crear(vm.Numero, vm.Estado, vm.SucursalId, userId);
             _context.Ventanillas.Add(ventanilla);
 
@@ -97,6 +106,14 @@ namespace Proyecto.Controllers
 
             var ventanilla = await _context.Ventanillas.FindAsync(vm.VentanillaId);
             if (ventanilla == null) return NotFound();
+
+            var duplicado = await _context.Ventanillas
+                .AnyAsync(v => !v.Eliminado && v.Numero_Ventanilla == vm.Numero && v.VentanillaId != vm.VentanillaId);
+            if (duplicado)
+            {
+                TempData["Error"] = $"Ya existe una ventanilla con el número '{vm.Numero}'.";
+                return RedirectToAction(nameof(Index));
+            }
 
             var userId = UsuarioActualId();
 
